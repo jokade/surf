@@ -9,6 +9,7 @@ package surf
 import surf.Completable.Response
 
 import scala.concurrent.{Future, Promise, ExecutionContext}
+import scala.util.Try
 
 // !!! IMPORTANT: this trait is defined in separate files for JVM and JS; KEEP both in sync !!!
 
@@ -45,7 +46,9 @@ object CompleterFactory {
     override def isCompleted: Boolean = _promise.isCompleted
     override def future: Future[Any] = _promise.future
     override def complete(resp: Response): Unit = _promise.complete(resp)
-    //override def onComplete(f: PartialFunction[Response, Unit]): Unit = future.onComplete(f)
+    override def onComplete(f: PartialFunction[Try[Any], Any]) = {future.onComplete(f);this}
+    override def onSuccess(f: PartialFunction[Any, Any]) = {future.onSuccess(f);this}
+    override def onFailure(f: PartialFunction[Throwable, Any]) = {future.onFailure(f);this}
   }
 
 }

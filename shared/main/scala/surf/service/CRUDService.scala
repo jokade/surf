@@ -117,9 +117,9 @@ abstract class CRUDService[IdType,EntityType] extends Service {
 
 
 /**
- * Defines the message types and exceptions for CRUD services.
+ * Defines the message types for CRUD services.
  */
-object CRUDService {
+trait CRUDServiceMessages {
 
   /**
    * Request to return all entities.
@@ -176,6 +176,9 @@ object CRUDService {
    */
   case class DeleteEntity(id: Any)
 
+}
+
+object CRUDService extends CRUDServiceMessages {
   class CRUDServiceError(msg: String, cause: Throwable) extends RuntimeException(msg,cause) {
     def this(msg: String) = this(msg,null)
     def this(cause: Throwable) = this(cause.toString,cause)

@@ -9,7 +9,7 @@ package surf
 import surf.Completable.Response
 
 import scala.concurrent.Future
-import scala.util.Success
+import scala.util.{Try, Success}
 
 /**
  * A completable request that provides access to the corresponding response in a future.
@@ -41,6 +41,10 @@ trait Request extends Completable {
    * @param fOutput
    */
   def map(fInput: (Any) => Any)(fOutput: (Any) => Any) : Request
+
+  override def onComplete(f: PartialFunction[Try[Any],Any]) : Request
+  override def onSuccess(f: PartialFunction[Any,Any]) : Request
+  override def onFailure(f: PartialFunction[Throwable,Any]) : Request
 }
 
 object Request {
@@ -59,6 +63,9 @@ object Request {
     override def mapInput(fInput: (Any)=>Any) = Request(fInput(input),target)
     override def mapOutput(fOutput: (Any)=>Any) = Request(input,target,fOutput)
     override def map(fInput: (Any) => Any)(fOutput: (Any)=>Any) = Request(fInput(input),target,fOutput)
+    override def onComplete(f: PartialFunction[Try[Any],Any]) = {target.onComplete(f);this}
+    override def onSuccess(f: PartialFunction[Any,Any]) = {target.onSuccess(f);this}
+    override def onFailure(f: PartialFunction[Throwable,Any]) = {target.onFailure(f);this}
   }
 
   object NullRequest extends Request {
@@ -67,6 +74,9 @@ object Request {
     override def isCompleted: Boolean = false
     override def future: Future[Any] = throw new RuntimeException(s"No future for NullRequest")
     override def complete(resp: Response): Unit = throw new RuntimeException(s"Cannot complete NullRequest")
+    override def onComplete(f: PartialFunction[Try[Any],Any]) = throw new RuntimeException("NullRequest will not complete")
+    override def onSuccess(f: PartialFunction[Any,Any]) = throw new RuntimeException("NullRequest will not complete")
+    override def onFailure(f: PartialFunction[Throwable,Any]) = throw new RuntimeException("NullRequest will not complete")
   }
 }
 

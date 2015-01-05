@@ -22,6 +22,9 @@ object Completable {
     val isCompleted: Boolean = true
     val future: Future[Option[Any]] = Future.successful(None)
     override def complete(resp: Response): Unit = throw RequestAlreadyCompletedException(this)
+    override def onComplete(f: PartialFunction[Try[Any], Any]): Completable = {f(Success(None));this}
+    override def onSuccess(f: PartialFunction[Any, Any]): Completable = {f(None);this}
+    override def onFailure(f: PartialFunction[Throwable, Any]): Completable = this
   }
 }
 
@@ -63,16 +66,28 @@ trait Completable {
   final def success(result: Any) : Unit = complete(Success(result))
 
   /**
-   * Completes the request (flow) successfully (but without an explicit result)
-   *
-   * @throws RequestAlreadyCompletedException if the request has already been completed
-   */
-  //final def success() : Unit = complete(Success(None))
-
-  /**
    * Returns a future that will be completed when this request (flow) is completed.
    */
   def future : Future[Any]
 
-  //def onComplete(f: PartialFunction[Response,Unit]) : Unit
+  /**
+   * The provided function is called when the request is completed
+   *
+   * @param f function to be called on completion
+   */
+  def onComplete(f: PartialFunction[Try[Any],Any]) : Completable
+
+  /**
+   * The specified function is called when the request is completed successfully
+   *
+   * @param f function to be called on successful completion
+   */
+  def onSuccess(f: PartialFunction[Any,Any]) : Completable
+
+  /**
+   * The specified function is called when the request fails.
+   *
+   * @param f function to be called on failure.
+   */
+  def onFailure(f: PartialFunction[Throwable,Any]) : Completable
 }
