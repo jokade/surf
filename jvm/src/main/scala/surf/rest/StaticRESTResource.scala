@@ -1,6 +1,9 @@
-//     Project:
-//      Module:
-// Description:
+// -   Project: surf (https://github.com/jokade/surf)
+//      Module: jvm
+// Description: Provides a class and corresponding handler for REST resources with static children
+//
+// Copyright (c) 2015 Johannes Kastner <jkspam@karchedon.de>
+//               Distributed under the MIT License (see included file LICENSE)
 package surf.rest
 
 import surf.rest.RESTResponse.OK

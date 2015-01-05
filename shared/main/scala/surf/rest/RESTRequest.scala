@@ -1,10 +1,16 @@
-//     Project:
-//      Module:
-// Description:
+// -   Project: surf (https://github.com/jokade/surf)
+//      Module: shared
+// Description: Factory for REST RequestS
+//
+// Copyright (c) 2015 Johannes Kastner <jkspam@karchedon.de>
+//               Distributed under the MIT License (see included file LICENSE)
 package surf.rest
 
 import surf.{CompleterFactory, Request}
 
+/**
+ * Factory for REST RequestS
+ */
 object RESTRequest {
 
   def GETRequest(resource: RESTResource,

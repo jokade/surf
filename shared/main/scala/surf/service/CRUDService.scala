@@ -1,6 +1,9 @@
-//     Project: SuRF
+// -   Project: surf (https://github.com/jokade/surf)
 //      Module: shared
 // Description: Provides a base class for CRUD data services
+//
+// Copyright (c) 2015 Johannes Kastner <jkspam@karchedon.de>
+//               Distributed under the MIT License (see included file LICENSE)
 package surf.service
 
 import surf.Service

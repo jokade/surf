@@ -1,3 +1,9 @@
+// -   Project: surf (https://github.com/jokade/surf)
+//      Module: shared
+// Description: Base class for REST services
+//
+// Copyright (c) 2015 Johannes Kastner <jkspam@karchedon.de>
+//               Distributed under the MIT License (see included file LICENSE)
 package surf.rest
 
 import surf.Service

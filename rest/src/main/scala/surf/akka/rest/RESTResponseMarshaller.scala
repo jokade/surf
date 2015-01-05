@@ -1,6 +1,9 @@
-//     Project:
-//      Module:
-// Description:
+// -   Project: surf (https://github.com/jokade/surf)
+//      Module: rest
+// Description: Provides marshallers for RESTResponseS
+//
+// Copyright (c) 2015 Johannes Kastner <jkspam@karchedon.de>
+//               Distributed under the MIT License (see included file LICENSE)
 package surf.akka.rest
 
 import akka.http.model.{ContentType, HttpEntity, MediaType}

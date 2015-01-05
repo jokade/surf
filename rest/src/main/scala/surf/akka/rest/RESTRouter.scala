@@ -1,6 +1,9 @@
-//     Project:
-//      Module: 
-// Description: 
+// -   Project: surf (https://github.com/jokade/surf)
+//      Module: rest
+// Description: Factory for akka-http based routes for handling requests to RESTResources
+//
+// Copyright (c) 2015 Johannes Kastner <jkspam@karchedon.de>
+//               Distributed under the MIT License (see included file LICENSE)
 package surf.akka.rest
 
 import akka.http.model.{StatusCodes, HttpResponse}
@@ -13,6 +16,9 @@ import akka.http.server.Directives._
 import surf.{ServiceRefFactory, CompleterFactory, Request}
 import surf.rest.{GET, RESTRequest, RESTResource}
 
+/**
+ * Factory for akka-http routes to handle requests to [[RESTResource]]S
+ */
 object RESTRouter {
 
   def apply(prefix: String, root: RESTResource)

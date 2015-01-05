@@ -1,8 +1,14 @@
-//     Project:
-//      Module:
-// Description:
+// -   Project: surf (https://github.com/jokade/surf)
+//      Module: shared
+// Description: Defines the standard HTTP REST request methods GET, PUT, POST and DELETE
+//
+// Copyright (c) 2015 Johannes Kastner <jkspam@karchedon.de>
+//               Distributed under the MIT License (see included file LICENSE)
 package surf.rest
 
+/**
+ * A REST request message
+ */
 sealed trait RESTAction {
 
   /**

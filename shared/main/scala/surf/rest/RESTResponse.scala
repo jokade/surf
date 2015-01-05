@@ -1,6 +1,9 @@
-//     Project: SuRF
+// -   Project: surf (https://github.com/jokade/surf)
 //      Module: shared
-// Description: Defines the possible response types for REST requests
+// Description: Defines the response message types for RESTRequestS
+//
+// Copyright (c) 2015 Johannes Kastner <jkspam@karchedon.de>
+//               Distributed under the MIT License (see included file LICENSE)
 package surf.rest
 
 /**
