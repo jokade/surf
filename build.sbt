@@ -13,6 +13,7 @@ libraryDependencies in ThisBuild ++= Seq(
   "com.lihaoyi" %% "utest" % "0.2.4" % "test"
 )
 
+
 lazy val jvm = project
 
 lazy val js = project
@@ -23,5 +24,6 @@ lazy val rest = project.dependsOn( akka )
 
 lazy val root = project.in( file(".") )
                 .aggregate(jvm,js,akka,rest)
-                .settings( publishTo := Some(Resolver.file("file",baseDirectory.value / "maven")) )
                 .settings( publish := {} )
+
+publishTo in ThisBuild := Some( Resolver.sftp("repo", "karchedon.de", "/www/htdocs/w00be83c/maven.karchedon.de/") )

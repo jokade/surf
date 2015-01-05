@@ -5,5 +5,3 @@ unmanagedSourceDirectories in Compile += baseDirectory.value / "shared" / "main"
 
 unmanagedSourceDirectories in Test += baseDirectory.value / "shared" / "test" / "scala"
 
-// directory for local publishing
-publishTo := Some(Resolver.file("file", baseDirectory.value / ".." / "maven"  ))

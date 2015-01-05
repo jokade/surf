@@ -10,5 +10,3 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.3.+"
 )
 
-// directory for local publishing
-publishTo := Some(Resolver.file("file", baseDirectory.value / ".." / "maven"  ))
