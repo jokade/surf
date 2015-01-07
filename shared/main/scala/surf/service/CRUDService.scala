@@ -16,6 +16,7 @@ import surf.Service
  */
 abstract class CRUDService[IdType,EntityType] extends Service {
   import CRUDService._
+  import CRUDServiceMessages._
 
   /**
    * Checks and casts the specified entity ID to the defined IdType
@@ -119,7 +120,7 @@ abstract class CRUDService[IdType,EntityType] extends Service {
 /**
  * Defines the message types for CRUD services.
  */
-trait CRUDServiceMessages {
+object CRUDServiceMessages {
 
   /**
    * Request to return all entities.
@@ -178,7 +179,7 @@ trait CRUDServiceMessages {
 
 }
 
-object CRUDService extends CRUDServiceMessages {
+object CRUDService {
   class CRUDServiceError(msg: String, cause: Throwable) extends RuntimeException(msg,cause) {
     def this(msg: String) = this(msg,null)
     def this(cause: Throwable) = this(cause.toString,cause)
