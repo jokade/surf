@@ -1,6 +1,6 @@
 name := "surf"
 
-organization in ThisBuild := "de.karchedon"
+organization in ThisBuild := "biz.enef"
 
 version in ThisBuild := "0.1-SNAPSHOT"
 
