@@ -1,29 +1,40 @@
-name := "surf"
 
-organization in ThisBuild := "biz.enef"
-
-version in ThisBuild := "0.1-SNAPSHOT"
-
-scalaVersion in ThisBuild := "2.11.4"
-
-scalacOptions in ThisBuild ++= Seq("-deprecation","-feature","-Xlint")
-
-libraryDependencies in ThisBuild ++= Seq(
-  "com.lihaoyi" %% "upickle" % "0.2.5",
-  "com.lihaoyi" %% "utest" % "0.2.4" % "test"
+lazy val commonSettings = Seq(
+  organization := "biz.enef",
+  version := "0.1-SNAPSHOT",
+  scalaVersion := "2.11.6",
+  scalacOptions ++= Seq("-deprecation","-unchecked","-feature","-Xlint")
 )
 
+lazy val root = project.in(file(".")).
+  aggregate(surfJS, surfJVM).
+  settings(
+    publish := {},
+    publishLocal := {}
+  )
 
-lazy val jvm = project
+lazy val surf = crossProject.in(file(".")).
+  enablePlugins(ScalaJSPlugin).
+  settings(commonSettings:_*).
+  settings(
+    name := "surf",
+    libraryDependencies ++= Seq(
+      "com.lihaoyi" %% "upickle" % "0.2.8",
+      "com.lihaoyi" %% "utest" % "0.3.1" % "test"
+    )
+  ).
+  jvmSettings(
+  ).
+  jsSettings(
+  )
 
-lazy val js = project
 
-lazy val akka = project.dependsOn( jvm )
 
-lazy val rest = project.dependsOn( akka )
+lazy val surfJVM = surf.jvm
 
-lazy val root = project.in( file(".") )
-                .aggregate(jvm,js,akka,rest)
-                .settings( publish := {} )
+lazy val surfJS = surf.js
 
-publishTo in ThisBuild := Some( Resolver.sftp("repo", "karchedon.de", "/www/htdocs/w00be83c/maven.karchedon.de/") )
+//lazy val akka = project.dependsOn( jvm )
+
+//lazy val rest = project.dependsOn( akka )
+
