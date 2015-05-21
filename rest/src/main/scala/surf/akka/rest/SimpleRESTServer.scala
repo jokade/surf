@@ -2,17 +2,19 @@
 //      Module: rest
 // Description: Provides a simple HTTP server for handling REST request
 //
-// Copyright (c) 2015 Johannes Kastner <jkspam@karchedon.de>
+// Copyright (c) 2015 Johannes Kastner <jokade@karchedon.de>
 //               Distributed under the MIT License (see included file LICENSE)
 package surf.akka.rest
 
+import akka.http.scaladsl.server.Route
+import akka.stream.scaladsl.Sink
 import surf.akka.ServiceActorRefFactory
 
 import scala.language.implicitConversions
 import akka.actor.ActorSystem
-import akka.http.{server, Http}
-import akka.http.server.Directives._
-import akka.stream.FlowMaterializer
+import akka.http.scaladsl.{server, Http}
+import server.Directives._
+import akka.stream.{ActorFlowMaterializer, FlowMaterializer}
 import surf.{Request, CompleterFactory}
 import surf.rest.{RESTRequest, StaticRESTResource, RESTResource}
 
@@ -35,11 +37,16 @@ class SimpleRESTServer(route: server.Route,
 
   import system.dispatcher
 
-  val binding = Http().bind(interface,port)
+  //val binding = Http().bind(interface,port)
+  val serverSource = Http().bind(interface,port)
 
-  val materializedMap = binding startHandlingWith route
+  val binding = serverSource.to(Sink.foreach{ connection =>
+    connection handleWith Route.handlerFlow(route)
+  }).run()
 
-  def stop() = binding.unbind(materializedMap).onComplete( _ => afterStop() )
+  //val materializedMap = binding startHandlingWith Route.asyncHandler(route)
+
+  def stop() = ??? //binding.value.get.get.unbind(materializedMap).onComplete( _ => afterStop() )
 }
 
 object SimpleRESTServer {
@@ -50,9 +57,10 @@ object SimpleRESTServer {
            (implicit cf: CompleterFactory) : SimpleRESTServer = {
 
     implicit val system = ActorSystem("rest")
+    implicit val materializer = ActorFlowMaterializer()
     import system.dispatcher
 
-    implicit val materializer = FlowMaterializer()
+    //implicit val materializer = FlowMaterializer()
     implicit val serviceRefFactory = ServiceActorRefFactory(system)
 
     val root = StaticRESTResource("rest",rootResources)
@@ -65,7 +73,7 @@ object SimpleRESTServer {
                 actorSystem: ActorSystem = ActorSystem("rest"),
                 completerFactory: CompleterFactory = surf.CompleterFactory.PromiseCompleterFactory)
                (createRoute: (ExecutionContext,CompleterFactory,FlowMaterializer)=>server.Route) : SimpleRESTServer = {
-    implicit val materializer = FlowMaterializer()(actorSystem)
+    implicit val materializer = ActorFlowMaterializer()(actorSystem)
 
     val route = createRoute(actorSystem.dispatcher,completerFactory,materializer)
 

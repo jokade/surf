@@ -2,7 +2,7 @@
 //      Module: shared
 // Description: Base class for surf services
 //
-// Copyright (c) 2015 Johannes Kastner <jkspam@karchedon.de>
+// Copyright (c) 2015 Johannes Kastner <jokade@karchedon.de>
 //               Distributed under the MIT License (see included file LICENSE)
 package surf
 

@@ -2,19 +2,19 @@
 //      Module: rest
 // Description: Provides marshallers for RESTResponseS
 //
-// Copyright (c) 2015 Johannes Kastner <jkspam@karchedon.de>
+// Copyright (c) 2015 Johannes Kastner <jokade@karchedon.de>
 //               Distributed under the MIT License (see included file LICENSE)
 package surf.akka.rest
 
-import akka.http.model.{ContentType, HttpEntity, MediaType}
+import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaType}
 import surf.rest.{RESTContentType, RESTResponse}
 import surf.rest.RESTResponse.OK
 
 object RESTResponseMarshaller {
-  import akka.http.marshalling.ToEntityMarshaller
-  import akka.http.marshalling.Marshaller
-  val `text/html` = MediaType.custom("text/html")
-  val `application/json` = MediaType.custom("application/json")
+  import akka.http.scaladsl.marshalling.ToEntityMarshaller
+  import akka.http.scaladsl.marshalling.Marshaller
+  val `text/html` = MediaType.custom("text/html",MediaType.Encoding.Open)
+  val `application/json` = MediaType.custom("application/json",MediaType.Encoding.Open)
 
   private val jsonType = ContentType(`application/json`)
 

@@ -2,7 +2,7 @@
 //      Module: shared
 // Description: MessageProcessor is the base trait for all Request processors
 //
-// Copyright (c) 2015 Johannes Kastner <jkspam@karchedon.de>
+// Copyright (c) 2015 Johannes Kastner <jokade@karchedon.de>
 //               Distributed under the MIT License (see included file LICENSE)
 package surf
 

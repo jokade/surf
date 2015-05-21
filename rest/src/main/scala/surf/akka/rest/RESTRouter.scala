@@ -2,17 +2,17 @@
 //      Module: rest
 // Description: Factory for akka-http based routes for handling requests to RESTResources
 //
-// Copyright (c) 2015 Johannes Kastner <jkspam@karchedon.de>
+// Copyright (c) 2015 Johannes Kastner <jokade@karchedon.de>
 //               Distributed under the MIT License (see included file LICENSE)
 package surf.akka.rest
 
-import akka.http.model.{StatusCodes, HttpResponse}
+import akka.http.scaladsl.model.{StatusCodes, HttpResponse}
 import akka.stream.FlowMaterializer
 
 import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
-import akka.http.server
-import akka.http.server.Directives._
+import akka.http.scaladsl.server
+import server.Directives._
 import surf.{ServiceRefFactory, CompleterFactory, Request}
 import surf.rest.{GET, RESTRequest, RESTResource}
 

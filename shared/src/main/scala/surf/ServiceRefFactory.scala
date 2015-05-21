@@ -2,7 +2,7 @@
 //      Module: shared
 // Description: Defines the interface and default implementations for ServiceRefFactoryS
 //
-// Copyright (c) 2015 Johannes Kastner <jkspam@karchedon.de>
+// Copyright (c) 2015 Johannes Kastner <jokade@karchedon.de>
 //               Distributed under the MIT License (see included file LICENSE)
 // Description:
 package surf
@@ -20,6 +20,11 @@ trait ServiceRefFactory {
 
 object ServiceRefFactory {
 
+  /**
+   * This factory creates ServiceRefS that process messages synchronously
+   * on the thread from where the message is sent. Hence
+   * ```service ! msg``` is equivalent to ```service.process(msg)```
+   */
   lazy val Static : ServiceRefFactory = new StaticServiceRefFactory
 
   class StaticServiceRefFactory extends ServiceRefFactory {
