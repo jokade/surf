@@ -28,9 +28,9 @@ class StaticRESTResource private(override val name: String,
     _handler
   }
 
-  def dynamicChild(path: List[String]) : Option[RESTResource] = None
+  def dynamicChild(path: Seq[String]) : Option[RESTResource] = None
 
-  override def child(path: List[String]): Option[RESTResource] =
+  override def child(path: Seq[String]): Option[RESTResource] =
     if(path.isEmpty) None
     else dynamicChild(path) orElse {
       val tail = path.tail
@@ -68,8 +68,8 @@ object StaticRESTResource {
     import upickle._
 
     override def handleGET(res: RESTResource, params: Map[String,Any]) = {
-      val res = ResourceList( resource.staticChildren.keys )
-      OK( write(res) )
+      val r = ResourceList( resource.staticChildren.keys )
+      request ! OK( write(r) )
     }
 
     case class ResourceList(resources: Iterable[String])

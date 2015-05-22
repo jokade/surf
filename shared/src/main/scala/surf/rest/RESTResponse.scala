@@ -51,7 +51,7 @@ object RESTResponse {
 
 
 object RESTContentType extends Enumeration {
-  val JSON = Value
-  val HTML = Value
-  val PLAIN = Value
+  val JSON = Value("application/json")
+  val HTML = Value("text/html")
+  val PLAIN = Value("text/plain")
 }

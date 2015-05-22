@@ -27,7 +27,7 @@ trait RESTResource {
    *
    * @param path List with relative path segments to the requested resource
    */
-  def child(path: List[String]) : Option[RESTResource]
+  def child(path: Seq[String]) : Option[RESTResource]
 
   /**
    * Returns the service to be used for handling requests to this resource.
