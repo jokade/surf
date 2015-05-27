@@ -21,6 +21,10 @@ trait Request extends Completable {
    */
   def input: Any
 
+  def annotations: Map[String,Any]
+
+  def withAnnotations(f: Map[String,Any]=>Map[String,Any]) : Request
+
   final def !(resp: Any) : Unit = success(resp)
 
   final def >>(service: ServiceRef) : Request = {
@@ -48,11 +52,13 @@ trait Request extends Completable {
 }
 
 object Request {
-  def apply(input: Any)(implicit cf: CompleterFactory) : Request = Impl(input, cf.createCompleter(),null)
+  def apply(input: Any)(implicit cf: CompleterFactory) : Request = Impl(input, cf.createCompleter(),Map(),null)
 
-  def apply(input: Any, target: Completable, mapResponse: (Any)=>Any = null) : Request = Impl(input,target,mapResponse)
+  def apply(input: Any, target: Completable, annotations: Map[String,Any] = Map(), mapResponse: (Any)=>Any = null) : Request =
+    Impl(input,target,annotations,mapResponse)
 
-  case class Impl(input: Any, target: Completable, mapResponse: (Any) => Any) extends Request {
+  case class Impl(input: Any, target: Completable, annotations: Map[String,Any], mapResponse: (Any) => Any) extends Request {
+    override def withAnnotations(f: Map[String,Any]=>Map[String,Any]) = Request(input,target, f(annotations),mapResponse)
     override def isCompleted: Boolean = target.isCompleted
     override def future: Future[Any] = target.future
     override def complete(resp: Response): Unit =
@@ -60,9 +66,9 @@ object Request {
         target.complete(resp)
       else
         target.complete(resp.map(mapResponse))
-    override def mapInput(fInput: (Any)=>Any) = Request(fInput(input),target)
-    override def mapOutput(fOutput: (Any)=>Any) = Request(input,target,fOutput)
-    override def map(fInput: (Any) => Any)(fOutput: (Any)=>Any) = Request(fInput(input),target,fOutput)
+    override def mapInput(fInput: (Any)=>Any) = Request(fInput(input),target,annotations,mapResponse)
+    override def mapOutput(fOutput: (Any)=>Any) = Request(input,target,annotations,fOutput)
+    override def map(fInput: (Any) => Any)(fOutput: (Any)=>Any) = Request(fInput(input),target,annotations,fOutput)
     override def onComplete(f: PartialFunction[Try[Any],Any]) = {target.onComplete(f);this}
     override def onSuccess(f: PartialFunction[Any,Any]) = {target.onSuccess(f);this}
     override def onFailure(f: PartialFunction[Throwable,Any]) = {target.onFailure(f);this}
@@ -70,7 +76,9 @@ object Request {
 
   object NullRequest extends Request {
     override def input: Any = None
-    override def map(fInput: (Any) => Any)(fOutput: (Any)=>Any): Request = throw new RuntimeException(s"Cannot map NullRequest")
+    override def annotations = Map.empty[String,Any]
+    override def withAnnotations(f: Map[String,Any]=>Map[String,Any]) = throw new RuntimeException("Cannot annotate NullRequest")
+    override def map(fInput: (Any) => Any)(fOutput: (Any)=>Any): Request = throw new RuntimeException("Cannot map NullRequest")
     override def isCompleted: Boolean = false
     override def future: Future[Any] = throw new RuntimeException(s"No future for NullRequest")
     override def complete(resp: Response): Unit = throw new RuntimeException(s"Cannot complete NullRequest")

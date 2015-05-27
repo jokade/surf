@@ -28,6 +28,14 @@ abstract class RESTServlet extends HttpServlet {
 
   def root: RESTResource
 
+  /**
+   * Returns a Map of annotations to be added to the [[Request]], or None.
+   *
+   * @param req
+   */
+  def annotations(req: HttpServletRequest) : Option[Map[String,Any]] = None
+
+
   override def doGet(req: HttpServletRequest, resp: HttpServletResponse): Unit =
     handleRequest(req,resp)(GETRequest(_,Map.empty[String,String]))
 
@@ -72,8 +80,10 @@ abstract class RESTServlet extends HttpServlet {
     getResource(req) match {
       case None =>
         resp.setStatus(404)
-      case Some(r) =>
-        f(r) >> r.handler onComplete handleResponse(resp,req.startAsync())
+      case Some(r) => (annotations(req) match {
+        case None => f(r)
+        case Some(as) => f(r).withAnnotations( _ => as )
+      }) >> r.handler onComplete handleResponse(resp,req.startAsync())
     }
 }
 
