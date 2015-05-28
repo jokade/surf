@@ -39,22 +39,37 @@ abstract class RESTServlet extends HttpServlet {
   override def doGet(req: HttpServletRequest, resp: HttpServletResponse): Unit =
     handleRequest(req,resp)(GETRequest(_,Map.empty[String,String]))
 
+  override def doPut(req: HttpServletRequest, resp: HttpServletResponse): Unit =
+    handleRequest(req,resp)(PUTRequest(_,Map.empty[String,String]))
+
+  override def doPost(req: HttpServletRequest, resp: HttpServletResponse): Unit =
+    handleRequest(req,resp)(POSTRequest(_,Map.empty[String,String]))
 
   private def getResource(req: HttpServletRequest) = req.getPathInfo match {
     case null | "/" => Some(root)
     case path => root.child( path.split("/").tail )
   }
 
+  private def error(http: HttpServletResponse, async: AsyncContext, status: Int, msg: String): Unit = {
+    http.setContentType("text/plain")
+    http.setStatus(status)
+    val w = async.getResponse.getWriter
+    try {
+      w.write(msg)
+    } finally {
+      w.close()
+    }
+    async.complete()
+  }
+
   private def handleResponse(http: HttpServletResponse, async: AsyncContext) : PartialFunction[Try[Any],Unit] = {
-    case Failure(_) =>
-      http.setStatus(500)
-      async.complete()
+    case Failure(r) =>
+      error(http,async,500,r.toString)
     case Success(OK(data,ctype)) =>
       http.setStatus(200)
       http.setContentType(ctype.toString)
       val w = async.getResponse.getWriter
-      w.write(data.toString)
-      w.close()
+      try{ w.write(data.toString) } finally {w.close()}
       async.complete()
     case Success(NoContent) =>
       http.setStatus(204)
@@ -66,14 +81,12 @@ abstract class RESTServlet extends HttpServlet {
       http.setStatus(404)
       async.complete()
     case Success(Error(msg)) =>
-      http.setStatus(500)
-      async.complete()
+      error(http,async,500,msg)
     case Success(MethodNotAllowed) =>
       http.setStatus(405)
       async.complete()
-    case x =>
-      http.setStatus(500)
-      async.complete()
+    case Success(x) =>
+      error(http,async,500,"Unknown REST response of type "+x.getClass)
   }
 
   private def handleRequest(req: HttpServletRequest, resp: HttpServletResponse)(f: RESTResource => Request) =
