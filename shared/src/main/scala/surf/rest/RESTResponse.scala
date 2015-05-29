@@ -24,6 +24,16 @@ object RESTResponse {
   case class OK(data: Any, ctype: RESTContentType.Value = RESTContentType.JSON) extends RESTResponse
 
   /**
+   * The requested resource was successfully created (HTTP Code: 201)
+   *
+   * @param data the response data
+   * @param location URL of the newly created resource (optional)
+   * @param ctype response content type
+   */
+  // TODO: correct semantics for CREATED?
+  //case class Created(data: Any, location: Option[String] = None, ctype: RESTContentType.Value = RESTContentType.JSON) extends RESTResponse
+
+  /**
    * Response to a successful request with empty content (HTTP Code: 204)
    */
   case object NoContent extends RESTResponse
@@ -37,6 +47,11 @@ object RESTResponse {
    * Resource not found (HTTP Code: 404)
    */
   case object NotFound extends RESTResponse
+
+  /**
+   * Conflict (HTTP Code: 409)
+   */
+  case class Conflict(msg: String) extends RESTResponse
 
   /**
    * Generic internal server error (HTTP Code: 500)

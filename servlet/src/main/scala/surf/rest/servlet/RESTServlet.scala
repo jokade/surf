@@ -71,6 +71,8 @@ abstract class RESTServlet extends HttpServlet {
       val w = async.getResponse.getWriter
       try{ w.write(data.toString) } finally {w.close()}
       async.complete()
+    // TODO: CREATED
+    //case Success(Created(data)) =>
     case Success(NoContent) =>
       http.setStatus(204)
       async.complete()
@@ -80,6 +82,8 @@ abstract class RESTServlet extends HttpServlet {
     case Success(NotFound) =>
       http.setStatus(404)
       async.complete()
+    case Success(Conflict(msg)) =>
+      error(http,async,409,msg)
     case Success(Error(msg)) =>
       error(http,async,500,msg)
     case Success(MethodNotAllowed) =>
