@@ -7,6 +7,8 @@
 package surf
 
 import surf.Completable.Response
+import surf.MessageProcessor.Processor
+import surf.service.StaticService
 
 import scala.concurrent.Future
 import scala.util.{Try, Success}
@@ -46,6 +48,15 @@ trait Request extends Completable {
    */
   def map(fInput: (Any) => Any)(fOutput: (Any) => Any) : Request
 
+  /**
+   * Maps the request input, if `f` is defined for this input. Otherwise the
+   * the current request is completed with `completeWith`.
+   *
+   * @param completeWith value used for completion if `f` is not defined for the input value
+   * @param f partial function that maps the request input, if it is defined for this input value
+   */
+  //def mapOrComplete(completeWith: Any)(f: PartialFunction[Any,Any]) : Request
+
   override def onComplete(f: PartialFunction[Try[Any],Any]) : Request
   override def onSuccess(f: PartialFunction[Any,Any]) : Request
   override def onFailure(f: PartialFunction[Throwable,Any]) : Request
@@ -72,6 +83,7 @@ object Request {
     override def onComplete(f: PartialFunction[Try[Any],Any]) = {target.onComplete(f);this}
     override def onSuccess(f: PartialFunction[Any,Any]) = {target.onSuccess(f);this}
     override def onFailure(f: PartialFunction[Throwable,Any]) = {target.onFailure(f);this}
+    //override def mapOrComplete(completeWith: Any)(f: PartialFunction[Any,Any]): Request = this>>(MapOrCompleteService(completeWith,f,target))
   }
 
   object NullRequest extends Request {
@@ -85,6 +97,15 @@ object Request {
     override def onComplete(f: PartialFunction[Try[Any],Any]) = throw new RuntimeException("NullRequest will not complete")
     override def onSuccess(f: PartialFunction[Any,Any]) = throw new RuntimeException("NullRequest will not complete")
     override def onFailure(f: PartialFunction[Throwable,Any]) = throw new RuntimeException("NullRequest will not complete")
+    //override def mapOrComplete(completeWith: Any)(f: PartialFunction[Any,Any]) = throw new RuntimeException("Cannot complete NullRequest")
   }
+
+  /*
+  case class MapOrCompleteService(completeWith: Any, f: PartialFunction[Any,Any], target: Completable) extends StaticService {
+    override def process = {
+      case msg if f.isDefinedAt(msg) => request ! f.apply(msg)
+      case _ => target.success(completeWith)
+    }
+  }*/
 }
 

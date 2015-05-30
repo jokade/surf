@@ -25,6 +25,8 @@ trait ServiceRefTest extends TestSuite {
     val service = serviceOf(ServiceProps(new Service1))
     lastCommand = ""
 
+    val x =  service :: (_:Any) match {case x => Next(x)} :: service
+
     'message-{
       service ! Cmd("test")
       assert( lastCommand == "test" )

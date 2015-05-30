@@ -17,38 +17,8 @@ import surf.Directives._
 
 import scala.util.{Try, Success, Failure}
 
-abstract class RESTServlet extends HttpServlet {
-  import RESTRequest._
+abstract class RESTServlet extends RESTServlet.Base {
   import surf.Directives._
-
-  /**
-   * Factory used to create ServiceRefS
-   */
-  implicit def handlerRef: ServiceRefFactory
-
-  def root: RESTResource
-
-  /**
-   * Returns a Map of annotations to be added to the [[Request]], or None.
-   *
-   * @param req
-   */
-  def annotations(req: HttpServletRequest) : Option[Map[String,Any]] = None
-
-
-  override def doGet(req: HttpServletRequest, resp: HttpServletResponse): Unit =
-    handleRequest(req,resp)(GETRequest(_,Map.empty[String,String]))
-
-  override def doPut(req: HttpServletRequest, resp: HttpServletResponse): Unit =
-    handleRequest(req,resp)(PUTRequest(_,Map.empty[String,String]))
-
-  override def doPost(req: HttpServletRequest, resp: HttpServletResponse): Unit =
-    handleRequest(req,resp)(POSTRequest(_,Map.empty[String,String]))
-
-  private def getResource(req: HttpServletRequest) = req.getPathInfo match {
-    case null | "/" => Some(root)
-    case path => root.child( path.split("/").tail )
-  }
 
   private def error(http: HttpServletResponse, async: AsyncContext, status: Int, msg: String): Unit = {
     http.setContentType("text/plain")
@@ -93,7 +63,7 @@ abstract class RESTServlet extends HttpServlet {
       error(http,async,500,"Unknown REST response of type "+x.getClass)
   }
 
-  private def handleRequest(req: HttpServletRequest, resp: HttpServletResponse)(f: RESTResource => Request) =
+  override protected def handleRequest(req: HttpServletRequest, resp: HttpServletResponse)(f: RESTResource => Request) : Unit =
     getResource(req) match {
       case None =>
         resp.setStatus(404)
@@ -104,3 +74,48 @@ abstract class RESTServlet extends HttpServlet {
     }
 }
 
+object RESTServlet {
+  abstract class Base extends HttpServlet {
+    import RESTRequest._
+
+    /**
+     * Factory used to create ServiceRefS
+     */
+    implicit def handlerRef: ServiceRefFactory
+
+    /**
+     * The root of the resource tree handled by this servlet
+     */
+    def root: RESTResource
+
+    /**
+     * Returns a Map of annotations to be added to the [[Request]], or None.
+     *
+     * @param req
+     */
+    def annotations(req: HttpServletRequest) : Option[Map[String,Any]] = None
+
+    /**
+     * Returns a map with all parameters set on the specified request.
+     */
+    final def params(req: HttpServletRequest) : Map[String,String] = Map()
+
+
+    final override def doGet(req: HttpServletRequest, resp: HttpServletResponse): Unit =
+      handleRequest(req,resp)(GETRequest(_,params(req)))
+
+    final override def doPut(req: HttpServletRequest, resp: HttpServletResponse): Unit =
+      handleRequest(req,resp)(PUTRequest(_,params(req)))
+
+    final override def doPost(req: HttpServletRequest, resp: HttpServletResponse): Unit =
+      handleRequest(req,resp)(POSTRequest(_,params(req)))
+
+    protected def getResource(req: HttpServletRequest) = req.getPathInfo match {
+      case null | "/" => Some(root)
+      case path => root.child( path.split("/").tail )
+    }
+
+    protected def handleRequest(req: HttpServletRequest, resp: HttpServletResponse)(f: RESTResource => Request) : Unit
+
+  }
+}
