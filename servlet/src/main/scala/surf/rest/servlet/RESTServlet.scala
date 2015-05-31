@@ -6,6 +6,7 @@
 //               Distributed under the MIT License (see included file LICENSE)
 package surf.rest.servlet
 
+import java.util.function.BinaryOperator
 import javax.servlet.AsyncContext
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest, HttpServlet}
 
@@ -105,10 +106,10 @@ object RESTServlet {
       handleRequest(req,resp)(GETRequest(_,params(req)))
 
     final override def doPut(req: HttpServletRequest, resp: HttpServletResponse): Unit =
-      handleRequest(req,resp)(PUTRequest(_,params(req)))
+      handleRequest(req,resp)(PUTRequest(_,params(req),body(req)))
 
     final override def doPost(req: HttpServletRequest, resp: HttpServletResponse): Unit =
-      handleRequest(req,resp)(POSTRequest(_,params(req)))
+      handleRequest(req,resp)(POSTRequest(_,params(req),body(req)))
 
     protected def getResource(req: HttpServletRequest) = req.getPathInfo match {
       case null | "/" => Some(root)
@@ -117,5 +118,11 @@ object RESTServlet {
 
     protected def handleRequest(req: HttpServletRequest, resp: HttpServletResponse)(f: RESTResource => Request) : Unit
 
+    private def body(req: HttpServletRequest) : String = {
+      val len = req.getContentLength
+      req.getReader.lines().reduce(new BinaryOperator[String] {
+        override def apply(t: String, u: String): String = t ++ u
+      }).orElse("")
+    }
   }
 }
