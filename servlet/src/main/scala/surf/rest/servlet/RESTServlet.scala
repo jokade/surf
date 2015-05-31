@@ -112,7 +112,7 @@ object RESTServlet {
 
     protected def getResource(req: HttpServletRequest) = req.getPathInfo match {
       case null | "/" => Some(root)
-      case path => root.child( path.split("/").tail )
+      case path => root.child(path.split("/").toList.tail)
     }
 
     protected def handleRequest(req: HttpServletRequest, resp: HttpServletResponse)(f: RESTResource => Request) : Unit

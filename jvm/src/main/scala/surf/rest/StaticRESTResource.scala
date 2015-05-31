@@ -30,7 +30,7 @@ class StaticRESTResource private(override val name: String,
 
   def dynamicChild(path: Seq[String]) : Option[RESTResource] = None
 
-  override def child(path: Seq[String]): Option[RESTResource] =
+  override def child(path: List[String]): Option[RESTResource] =
     if(path.isEmpty) None
     else dynamicChild(path) orElse {
       val tail = path.tail

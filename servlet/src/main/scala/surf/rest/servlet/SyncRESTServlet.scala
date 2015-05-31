@@ -28,48 +28,42 @@ abstract class SyncRESTServlet extends RESTServlet.Base {
           case None => f(r)
           case Some(as) => f(r).withAnnotations( _ => as )
         }) >> r.handler
-        Await.ready( flow.onComplete(handleResponse(resp)).future, timeout )
+        val result = Await.result(flow.future, timeout)
+        handleResponse(resp)(result)
   }
 
-  private def handleResponse(resp: HttpServletResponse) : PartialFunction[Try[Any],Any] = {
-    case Failure(r) =>
-      error(resp,500,"Internal error in REST service layer")
-    case Success(OK(data,ctype)) =>
+  // TODO: do we need to return a PartialFunction here?
+  private def handleResponse(resp: HttpServletResponse) : PartialFunction[Any,Any] = {
+    case OK(data,ctype) =>
       resp.setStatus(200)
       resp.setContentType(ctype.toString)
       writeData(data,resp)
-    case Success(NoContent) =>
+    case NoContent =>
       resp.setStatus(204)
-    case Success(BadRequest(msg)) =>
+    case BadRequest(msg) =>
       resp.setStatus(400)
-    case Success(NotFound) =>
+    case NotFound =>
       resp.setStatus(404)
-    case Success(Conflict(msg)) =>
+    case Conflict(msg) =>
       error(resp,409,msg)
-    case Success(Error(msg)) =>
+    case Error(msg) =>
       error(resp,500,msg)
-    case Success(MethodNotAllowed) =>
+    case MethodNotAllowed =>
       error(resp,405,"")
-    case Success(x) =>
+    case x =>
       error(resp,500,"Unknonw REST response of type "+x.getClass)
   }
 
   // TODO: use streams (and possible callbacks?)
   private def writeData(data: Any, resp: HttpServletResponse) : Unit = {
     val w = resp.getWriter
-    try{ w.print(data.toString) }
-    finally{ w.close() }
+    val d = data.toString
+    w.print(d)
+    resp.setContentLength(d.length)
   }
 
   private def error(resp: HttpServletResponse, status: Int, msg: String): Unit = {
-    resp.setContentType("text/plain")
-    resp.setStatus(status)
-    val w = resp.getWriter
-    try {
-      w.write(msg)
-    } finally {
-      w.close()
-    }
+    resp.sendError(status,msg)
   }
 
 }
