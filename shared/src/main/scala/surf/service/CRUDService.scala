@@ -106,7 +106,7 @@ abstract class CRUDService[IdType,EntityType] extends Service {
   def otherMessage(msg: Any) : Unit = throw new OperationNotSupported("otherMessage")
 
 
-  final override def process = {
+  override def process = {
     case ListEntities   if isRequest => request ! wrapListResponse( listEntities() )
     case ReadEntity(id) if isRequest => request ! readEntity(checkId(id))
     case UpdateEntity(e)             => if(isRequest) request ! updateEntity(checkEntity(e)) else updateEntity(checkEntity(e))
