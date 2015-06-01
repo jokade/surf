@@ -13,6 +13,7 @@ import surf.Request.NullRequest
  */
 abstract class Service extends MessageProcessor {
   private var _req : Request = NullRequest
+  def handleException(ex: Throwable) : Unit = {}
   final override def request : Request = _req
   final override def isRequest : Boolean = _req != NullRequest
   final def handle(req: Request, data: Any): Unit = {
@@ -21,7 +22,9 @@ abstract class Service extends MessageProcessor {
       process.apply(data)
     }
     catch {
-      case ex: Throwable => req.failure(ex)
+      case ex: Throwable =>
+        handleException(ex)
+        req.failure(ex)
     }
   }
 }
