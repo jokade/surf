@@ -24,7 +24,7 @@ abstract class RESTService extends Service {
   def handleOther(message: Any) : Option[Any] = ???
 
 
-  final override def process = {
+  override def process = {
     case GET(res,params)       if isRequest => handleGET(res,params)
     case PUT(res,params,body)  if isRequest => handlePUT(res,params,body)
     case POST(res,params,body) if isRequest => handlePOST(res,params,body)

@@ -12,12 +12,14 @@ import surf.Request
 import surf.rest.RESTResource
 import surf.rest.RESTResponse._
 
+import scala.annotation.tailrec
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.util.{Success, Failure, Try}
 
 abstract class SyncRESTServlet extends RESTServlet.Base {
   private val timeout = Duration(5,"seconds")
+
 
   override protected def handleRequest(req: HttpServletRequest, resp: HttpServletResponse)(f: (RESTResource) => Request): Unit =
     getResource(req) match {
@@ -41,7 +43,7 @@ abstract class SyncRESTServlet extends RESTServlet.Base {
     case NoContent =>
       resp.setStatus(204)
     case BadRequest(msg) =>
-      resp.setStatus(400)
+      error(resp,400,msg)
     case NotFound =>
       resp.setStatus(404)
     case Conflict(msg) =>
@@ -50,6 +52,10 @@ abstract class SyncRESTServlet extends RESTServlet.Base {
       error(resp,500,msg)
     case MethodNotAllowed =>
       error(resp,405,"")
+    case Failure(ex) =>
+      error(resp,500,ex.toString)
+    case Success(x) =>
+      handleResponse(resp).apply(x)
     case x =>
       error(resp,500,"Unknonw REST response of type "+x.getClass)
   }

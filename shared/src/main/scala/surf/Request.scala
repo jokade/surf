@@ -69,20 +69,21 @@ object Request {
     Impl(input,target,annotations,mapResponse)
 
   case class Impl(input: Any, target: Completable, annotations: Map[String,Any], mapResponse: (Any) => Any) extends Request {
-    override def withAnnotations(f: Map[String,Any]=>Map[String,Any]) = Request(input,target, f(annotations),mapResponse)
-    override def isCompleted: Boolean = target.isCompleted
-    override def future: Future[Any] = target.future
-    override def complete(resp: Response): Unit =
+    final override def withAnnotations(f: Map[String,Any]=>Map[String,Any]) = Request(input,target, f(annotations),mapResponse)
+    final override def isCompleted: Boolean = target.isCompleted
+    final override def future: Future[Any] = target.future
+    final override def complete(resp: Response): Unit =
       if(mapResponse==null)
         target.complete(resp)
       else
         target.complete(resp.map(mapResponse))
-    override def mapInput(fInput: (Any)=>Any) = Request(fInput(input),target,annotations,mapResponse)
-    override def mapOutput(fOutput: (Any)=>Any) = Request(input,target,annotations,fOutput)
-    override def map(fInput: (Any) => Any)(fOutput: (Any)=>Any) = Request(fInput(input),target,annotations,fOutput)
-    override def onComplete(f: PartialFunction[Try[Any],Any]) = {target.onComplete(f);this}
-    override def onSuccess(f: PartialFunction[Any,Any]) = {target.onSuccess(f);this}
-    override def onFailure(f: PartialFunction[Throwable,Any]) = {target.onFailure(f);this}
+    final override def mapInput(fInput: (Any)=>Any) = Request(fInput(input),target,annotations,mapResponse)
+    //final override def mapOutput(fOutput: (Any)=>Any) = Request(input,target,annotations,fOutput andThen mapResponse)
+    final override def map(fInput: (Any) => Any)(fOutput: (Any)=>Any) = Request(fInput(input),target,annotations,
+      if(mapResponse==null) fOutput else fOutput andThen mapResponse)
+    final override def onComplete(f: PartialFunction[Try[Any],Any]) = {target.onComplete(f);this}
+    final override def onSuccess(f: PartialFunction[Any,Any]) = {target.onSuccess(f);this}
+    final override def onFailure(f: PartialFunction[Throwable,Any]) = {target.onFailure(f);this}
     //override def mapOrComplete(completeWith: Any)(f: PartialFunction[Any,Any]): Request = this>>(MapOrCompleteService(completeWith,f,target))
   }
 
