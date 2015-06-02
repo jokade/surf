@@ -15,6 +15,9 @@ import surf.rest.RESTResponse._
 import surf.rest.{RESTRequest, StaticRESTResource, RESTResource}
 import surf.CompleterFactory.Implicits.globalCF
 import surf.Directives._
+import collection.JavaConverters._
+import scala.collection.convert.Wrappers.JIterableWrapper
+import scala.collection.immutable.{AbstractMap, DefaultMap}
 
 import scala.util.{Try, Success, Failure}
 
@@ -99,7 +102,7 @@ object RESTServlet {
     /**
      * Returns a map with all parameters set on the specified request.
      */
-    final def params(req: HttpServletRequest) : Map[String,String] = Map()
+    final def params(req: HttpServletRequest) : Map[String,Array[String]] = new ParamsMap(req.getParameterMap)
 
 
     final override def doGet(req: HttpServletRequest, resp: HttpServletResponse): Unit =
@@ -123,6 +126,14 @@ object RESTServlet {
       req.getReader.lines().reduce(new BinaryOperator[String] {
         override def apply(t: String, u: String): String = t ++ u
       }).orElse("")
+    }
+
+    // TODO: more efficient solution?
+    private class ParamsMap(m: java.util.Map[String,Array[String]])
+      extends AbstractMap[String,Array[String]] with DefaultMap[String,Array[String]] {
+      override def get(key: String): Option[Array[String]] = if(m.containsKey(key)) Some(m.get(key)) else None
+
+      override def iterator: Iterator[(String, Array[String])] = m.asScala.toIterator
     }
   }
 }

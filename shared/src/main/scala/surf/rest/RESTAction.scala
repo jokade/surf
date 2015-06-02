@@ -19,14 +19,14 @@ sealed trait RESTAction {
   /**
    * The URL query parameters sent with this request
    */
-  def params: Map[String,String]
+  def params: Map[String,Any]
 
 }
 
-case class GET(resource: RESTResource, params: Map[String,String]) extends RESTAction
+case class GET(resource: RESTResource, params: Map[String,Any]) extends RESTAction
 
-case class PUT(resource: RESTResource, params: Map[String,String], body: String) extends RESTAction
+case class PUT(resource: RESTResource, params: Map[String,Any], body: String) extends RESTAction
 
-case class POST(resource: RESTResource, params: Map[String,String], body: String) extends RESTAction
+case class POST(resource: RESTResource, params: Map[String,Any], body: String) extends RESTAction
 
-case class DELETE(resource: RESTResource, params: Map[String,String]) extends RESTAction
+case class DELETE(resource: RESTResource, params: Map[String,Any]) extends RESTAction
