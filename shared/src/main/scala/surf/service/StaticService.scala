@@ -31,6 +31,7 @@ abstract class StaticService extends MessageProcessor with ServiceRef {
 }
 
 class SyncServiceWrapper(processor: Service) extends ServiceRef {
+  processor.self = this
   override def !(req: Request): Request = this.synchronized{
     processor.handle(req,req.input)
     req

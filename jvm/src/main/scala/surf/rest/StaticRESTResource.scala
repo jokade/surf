@@ -13,7 +13,8 @@ class StaticRESTResource private(override val name: String,
                          val staticChildren: Map[String,RESTResource],
                          service: ServiceRef,
                          props: (StaticRESTResource)=>ServiceProps) extends RESTResource {
-  assert( RESTResource.isValidResourceName(name) )
+  if( !RESTResource.isValidResourceName(name) )
+    throw new IllegalArgumentException(s"Invalid resource name '$name' for StaticRESTResource")
 
   private var _handler : ServiceRef = service
 

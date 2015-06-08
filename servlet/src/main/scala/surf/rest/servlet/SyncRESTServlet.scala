@@ -36,10 +36,10 @@ abstract class SyncRESTServlet extends RESTServlet.Base {
 
   // TODO: do we need to return a PartialFunction here?
   private def handleResponse(resp: HttpServletResponse) : PartialFunction[Any,Any] = {
-    case OK(data,ctype) =>
+    case OK(writeData,ctype) =>
       resp.setStatus(200)
       resp.setContentType(ctype.toString)
-      writeData(data,resp)
+      writeData(resp.getWriter)
     case NoContent =>
       resp.setStatus(204)
     case BadRequest(msg) =>

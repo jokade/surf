@@ -6,6 +6,8 @@
 //               Distributed under the MIT License (see included file LICENSE)
 package surf.rest
 
+import java.io.Writer
+
 /**
  * Response to a REST request (ie a request with a [[RESTAction]] message).
  */
@@ -19,9 +21,15 @@ object RESTResponse {
   /**
    * Response to a successful request (HTTP Code: 200)
    *
-   * @param data the response data
+   * @param writeResponse called with the writer to which the response data should be written
    */
-  case class OK(data: Any, ctype: RESTContentType.Value = RESTContentType.JSON) extends RESTResponse
+  case class OK(writeResponse: (Writer) => Unit, ctype: RESTContentType.Value = RESTContentType.JSON) extends RESTResponse
+  object OK {
+    /**
+     * @param data response data (written using its `toString` method)
+     */
+    def apply(data: String): OK = OK( (w:Writer) => w.write(data.toString) )
+  }
 
   /**
    * The requested resource was successfully created (HTTP Code: 201)
@@ -69,4 +77,5 @@ object RESTContentType extends Enumeration {
   val JSON = Value("application/json")
   val HTML = Value("text/html")
   val PLAIN = Value("text/plain")
+  val CALENDAR = Value("text/calendar")
 }

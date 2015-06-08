@@ -11,7 +11,7 @@ import surf.MessageProcessor.Processor
 import surf.service.StaticService
 
 import scala.concurrent.Future
-import scala.util.{Try, Success}
+import scala.util.{Failure, Try, Success}
 
 /**
  * A completable request that provides access to the corresponding response in a future.
@@ -31,7 +31,6 @@ trait Request extends Completable {
 
   final def >>(service: ServiceRef) : Request = {
     service ! this
-    this
   }
 
   def mapInput(fInput: (Any)=>Any) : Request = map(fInput)( x=>x )
@@ -101,12 +100,20 @@ object Request {
     //override def mapOrComplete(completeWith: Any)(f: PartialFunction[Any,Any]) = throw new RuntimeException("Cannot complete NullRequest")
   }
 
-  /*
-  case class MapOrCompleteService(completeWith: Any, f: PartialFunction[Any,Any], target: Completable) extends StaticService {
-    override def process = {
-      case msg if f.isDefinedAt(msg) => request ! f.apply(msg)
-      case _ => target.success(completeWith)
+  case class Proxy(req: Request, next: ServiceRef) extends Request {
+    override def input: Any = req.input
+    override def withAnnotations(f: (Map[String, Any]) => Map[String, Any]): Request = Proxy(req.withAnnotations(f),next)
+    override def annotations: Map[String, Any] = req.annotations
+    override def onComplete(f: PartialFunction[Try[Any], Any]): Request = req.onComplete(f)
+    override def onFailure(f: PartialFunction[Throwable, Any]): Request = req.onFailure(f)
+    override def onSuccess(f: PartialFunction[Any, Any]): Request = req.onSuccess(f)
+    override def map(fInput: (Any) => Any)(fOutput: (Any) => Any): Request = Proxy(req.map(fInput)(fOutput),next)
+    override def isCompleted: Boolean = req.isCompleted
+    override def future: Future[Any] = req.future
+    override def complete(resp: Response): Unit = resp match {
+      case Success(msg) => next ! req.withInput(msg)
+      case Failure(ex) => req.failure(ex)
     }
-  }*/
+  }
 }
 
