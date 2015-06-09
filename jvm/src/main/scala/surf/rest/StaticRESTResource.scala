@@ -68,7 +68,7 @@ object StaticRESTResource {
   class StaticRESTResourceHandler(resource: StaticRESTResource) extends RESTService {
     import upickle._
 
-    override def handleGET(res: RESTResource, params: Map[String,Any]) = {
+    override def handleGET(res: RESTResource, params: Map[String,Array[String]]) = {
       val r = ResourceList( resource.staticChildren.keys )
       request ! OK( write(r) )
     }

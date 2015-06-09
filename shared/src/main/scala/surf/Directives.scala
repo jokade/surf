@@ -24,16 +24,13 @@ trait Directives {
   }
 
   implicit class ServiceDSL(service: ServiceRef) {
-    def ::(left: ServiceRef)(implicit cf: CompleterFactory) : PipeService = left :: service :: PipeEnd
+    def ::(left: ServiceRef) : PipeService = left :: service :: PipeEnd
   }
 
 
 
   sealed trait PipeService extends ServiceRef {
-    def ::(head: ServiceRef)(implicit cf: CompleterFactory) : PipeService = PipeCons(head,this)(cf)
-    /*def ::(head: PartialFunction[Any,FilterMapping])(implicit cf: CompleterFactory) : ServiceRef =
-      new FilterService(head,this)
-      */
+    def ::(head: ServiceRef) : PipeService = PipeCons(head,this)
   }
 
   case object PipeEnd extends PipeService {
@@ -41,7 +38,7 @@ trait Directives {
     override def !(msg: Any): Unit = {}
   }
 
-  case class PipeCons(head: ServiceRef, tail: PipeService)(implicit cf: CompleterFactory) extends PipeService {
+  case class PipeCons(head: ServiceRef, tail: PipeService) extends PipeService {
     override def !(msg: Any) : Unit = head ! msg
     override def !(req: Request) = tail match {
       case PipeEnd => req >> head
@@ -51,15 +48,6 @@ trait Directives {
         else
           req >> tail
       case next: PipeCons =>
-      /*{
-        val wrapped = Request(req.input)
-        head ! wrapped
-        wrapped.future.onComplete{
-          case Success(result) => next ! req.withInput(result)
-          case Failure(ex) => req.failure(ex)
-        }(cf.executionContext)
-        req
-      }*/
         head ! Request.Proxy(req,next)
     }
   }

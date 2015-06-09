@@ -13,13 +13,13 @@ import surf.Service
  */
 abstract class RESTService extends Service {
 
-  def handleGET(resource: RESTResource, params: Map[String,Any]) : Unit = request ! RESTResponse.MethodNotAllowed
+  def handleGET(resource: RESTResource, params: Map[String,Array[String]]) : Unit = request ! RESTResponse.MethodNotAllowed
 
-  def handlePUT(resource: RESTResource, params: Map[String,Any], body: String) : Unit = request ! RESTResponse.MethodNotAllowed
+  def handlePUT(resource: RESTResource, params: Map[String,Array[String]], body: String) : Unit = request ! RESTResponse.MethodNotAllowed
 
-  def handlePOST(resource: RESTResource, params: Map[String,Any], body: String) : Unit = request ! RESTResponse.MethodNotAllowed
+  def handlePOST(resource: RESTResource, params: Map[String,Array[String]], body: String) : Unit = request ! RESTResponse.MethodNotAllowed
 
-  def handleDELETE(resource: RESTResource, params: Map[String,Any]) : Unit = request ! RESTResponse.MethodNotAllowed
+  def handleDELETE(resource: RESTResource, params: Map[String,Array[String]]) : Unit = request ! RESTResponse.MethodNotAllowed
 
   def handleOther(message: Any) : Option[Any] = ???
 

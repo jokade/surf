@@ -52,7 +52,7 @@ trait RESTResource {
 
 object RESTResource {
 
-  val validNames = "[a-zA-Z0-9_-\\.]+".r.pattern
+  val validNames = """[a-zA-Z0-9_\-\.]+""".r.pattern
 
   def isValidResourceName(name: String) : Boolean = name != null && validNames.matcher(name).matches()
 
