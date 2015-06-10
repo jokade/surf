@@ -38,7 +38,7 @@ abstract class SyncRESTServlet extends RESTServlet.Base {
   private def handleResponse(resp: HttpServletResponse) : PartialFunction[Any,Any] = {
     case OK(writeData,ctype) =>
       resp.setStatus(200)
-      resp.setContentType(ctype.toString)
+      resp.setContentType(ctype)
       writeData(resp.getWriter)
     case NoContent =>
       resp.setStatus(204)

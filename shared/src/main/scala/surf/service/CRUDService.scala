@@ -63,6 +63,8 @@ abstract class CRUDService[IdType,EntityType] extends Service {
    */
   def readEntity(id: IdType) : Option[EntityType] = throw new OperationNotSupported("readEntity")
 
+  def readEntities(ids: Seq[IdType]) : Seq[EntityType] = throw new OperationNotSupported("readEntities")
+
   /**
    * Saves the specified Entity and returns the updated entity.
    * Returns None, if the entity does not exist.
@@ -107,12 +109,13 @@ abstract class CRUDService[IdType,EntityType] extends Service {
 
 
   override def process = {
-    case ListEntities   if isRequest => request ! wrapListResponse( listEntities() )
-    case ReadEntity(id) if isRequest => request ! readEntity(checkId(id))
-    case UpdateEntity(e)             => if(isRequest) request ! updateEntity(checkEntity(e)) else updateEntity(checkEntity(e))
-    case CreateEntity(e)             => if(isRequest) request ! createEntity(checkEntity(e)) else createEntity(checkEntity(e))
-    case DeleteEntity(id)            => if(isRequest) request ! deleteEntity(checkId(id)) else deleteEntity((checkId(id)))
-    case msg                         => otherMessage(msg)
+    case ListEntities      if isRequest => request ! wrapListResponse( listEntities() )
+    case ReadEntity(id)    if isRequest => request ! readEntity(checkId(id))
+    case ReadEntities(ids) if isRequest => request ! wrapListResponse( readEntities(ids.map(checkId(_))) )
+    case UpdateEntity(e)                => if(isRequest) request ! updateEntity(checkEntity(e)) else updateEntity(checkEntity(e))
+    case CreateEntity(e)                => if(isRequest) request ! createEntity(checkEntity(e)) else createEntity(checkEntity(e))
+    case DeleteEntity(id)               => if(isRequest) request ! deleteEntity(checkId(id)) else deleteEntity((checkId(id)))
+    case msg                            => otherMessage(msg)
   }
 }
 
@@ -125,7 +128,7 @@ object CRUDServiceMessages {
   /**
    * Request to return all entities.
    * <br/>
-   * Response: Iterable with all entites, wrapped via [[CRUDService.wrapListResponse]]
+   * Response: Iterable with all entities, wrapped via [[CRUDService.wrapListResponse]]
    *
    * @see [[CRUDService.listEntities]], [[CRUDService.wrapListResponse]]
    */
@@ -142,6 +145,15 @@ object CRUDServiceMessages {
    * @see [[CRUDService.readEntity]]
    */
   case class ReadEntity(id: Any)
+
+  /**
+   * Request to read all specified entities
+   * <br />
+   * Response: Iterable with all entities, wrapped via [[CRUDService.wrapListResponse]]
+   *
+   * @param ids
+   */
+  case class ReadEntities(ids: Seq[Any])
 
   /**
    * Request to update the specified entity.

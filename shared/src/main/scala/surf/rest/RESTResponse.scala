@@ -23,12 +23,13 @@ object RESTResponse {
    *
    * @param writeResponse called with the writer to which the response data should be written
    */
-  case class OK(writeResponse: (Writer) => Unit, ctype: RESTContentType.Value = RESTContentType.JSON) extends RESTResponse
+  case class OK(writeResponse: (Writer) => Unit, ctype: String = RESTContentType.JSON) extends RESTResponse
   object OK {
+
     /**
      * @param data response data (written using its `toString` method)
      */
-    def apply(data: String): OK = OK( (w:Writer) => w.write(data.toString) )
+    def apply(data: String): OK = OK( _.write(data.toString) )
   }
 
   /**
@@ -73,9 +74,9 @@ object RESTResponse {
 }
 
 
-object RESTContentType extends Enumeration {
-  val JSON = Value("application/json")
-  val HTML = Value("text/html")
-  val PLAIN = Value("text/plain")
-  val CALENDAR = Value("text/calendar")
+object RESTContentType {
+  val JSON = "application/json"
+  val HTML = "text/html"
+  val PLAIN = "text/plain"
+  val CALENDAR = "text/calendar"
 }
