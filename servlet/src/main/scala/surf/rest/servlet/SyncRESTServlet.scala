@@ -36,10 +36,10 @@ abstract class SyncRESTServlet extends RESTServlet.Base {
 
   // TODO: do we need to return a PartialFunction here?
   private def handleResponse(resp: HttpServletResponse) : PartialFunction[Any,Any] = {
-    case OK(writeData,ctype) =>
+    case OK(rg,ctype) =>
       resp.setStatus(200)
       resp.setContentType(ctype)
-      writeData(resp.getWriter)
+      writeData(rg,resp)
     case NoContent =>
       resp.setStatus(204)
     case BadRequest(msg) =>
@@ -61,11 +61,9 @@ abstract class SyncRESTServlet extends RESTServlet.Base {
   }
 
   // TODO: use streams (and possible callbacks?)
-  private def writeData(data: Any, resp: HttpServletResponse) : Unit = {
-    val w = resp.getWriter
-    val d = data.toString
-    w.print(d)
-    resp.setContentLength(d.length)
+  private def writeData(rg: ResponseGenerator, resp: HttpServletResponse) : Unit = rg match {
+    case Left(write) => write(resp.getWriter)
+    case Right(out) => out(resp.getOutputStream)
   }
 
   private def error(resp: HttpServletResponse, status: Int, msg: String): Unit = {

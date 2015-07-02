@@ -6,7 +6,7 @@
 //               Distributed under the MIT License (see included file LICENSE)
 package surf.rest
 
-import java.io.Writer
+import java.io.{OutputStream, Writer}
 
 /**
  * Response to a REST request (ie a request with a [[RESTAction]] message).
@@ -17,19 +17,22 @@ sealed trait RESTResponse
  * RESTResponse types
  */
 object RESTResponse {
+  type ResponseGenerator = Either[(Writer)=>Unit,(OutputStream)=>Unit]
 
   /**
    * Response to a successful request (HTTP Code: 200)
    *
    * @param writeResponse called with the writer to which the response data should be written
    */
-  case class OK(writeResponse: (Writer) => Unit, ctype: String = RESTContentType.JSON) extends RESTResponse
+  case class OK(writeResponse: ResponseGenerator, ctype: String) extends RESTResponse
   object OK {
+    def apply(write: (Writer)=>Unit, ctype: String): OK = OK( Left(write), ctype )
+    def binary(out: (OutputStream)=>Unit, ctype: String): OK = OK( Right(out), ctype )
 
     /**
      * @param data response data (written using its `toString` method)
      */
-    def apply(data: String): OK = OK( _.write(data.toString) )
+    def apply(data: String, ctype: String = RESTContentType.JSON): OK = OK( (w:Writer) => w.write(data.toString), ctype )
   }
 
   /**
