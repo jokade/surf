@@ -6,7 +6,7 @@
 //               Distributed under the MIT License (see included file LICENSE)
 package surf.rest
 
-import surf.{CompleterFactory, Request}
+import surf.{CompletableFactory, Request}
 
 /**
  * Factory for REST RequestS
@@ -16,21 +16,21 @@ object RESTRequest {
 
   def GETRequest(resource: RESTResource,
                  params: RequestParams = Map.empty)
-                (implicit cf: CompleterFactory) : Request = Request(GET(resource,params))
+                (implicit cf: CompletableFactory) : Request = Request(GET(resource,params))
 
   def PUTRequest(resource: RESTResource,
                  params: RequestParams = Map.empty,
                  body: String = "")
-                (implicit cf: CompleterFactory) : Request = Request(PUT(resource,params,body))
+                (implicit cf: CompletableFactory) : Request = Request(PUT(resource,params,body))
 
   def POSTRequest(resource: RESTResource,
                   params: RequestParams = Map.empty,
                   body: String = "")
-                 (implicit cf: CompleterFactory) : Request = Request(POST(resource,params,body))
+                 (implicit cf: CompletableFactory) : Request = Request(POST(resource,params,body))
 
   def DELETERequest(resource: RESTResource,
                     params: RequestParams = Map.empty)
-                   (implicit cf: CompleterFactory) : Request = Request(DELETE(resource,params))
+                   (implicit cf: CompletableFactory) : Request = Request(DELETE(resource,params))
 
 
   object BooleanParam {

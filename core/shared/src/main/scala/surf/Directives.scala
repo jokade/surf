@@ -18,7 +18,7 @@ import scala.util.{Try, Failure, Success}
 trait Directives {
 
   implicit class RequestDSL(data: Any) {
-    def >>(ref: ServiceRef)(implicit cf: CompleterFactory) : Request = {
+    def >>(ref: ServiceRef)(implicit cf: CompletableFactory) : Request = {
       ref ! Request(data)
     }
   }

@@ -7,16 +7,17 @@
 package surf.test
 
 import surf.MessageProcessor.Processor
-import surf.{ServiceRef, ServiceProps, Service, CompleterFactory}
+import surf.{ServiceRef, ServiceProps, Service, CompletableFactory}
 import surf.Directives._
 import utest._
 
 import scala.concurrent.ExecutionContext
 
+/*
 trait ServiceRefTest extends TestSuite {
 
   implicit def ec: ExecutionContext
-  implicit def cf: CompleterFactory
+  implicit def cf: CompletableFactory
   def serviceOf(props: ServiceProps) : ServiceRef
 
   private var lastCommand = ""
@@ -53,3 +54,4 @@ trait ServiceRefTest extends TestSuite {
     }
   }
 }
+*/
