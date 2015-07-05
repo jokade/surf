@@ -1,29 +1,33 @@
 
 lazy val commonSettings = Seq(
   organization := "biz.enef",
-  version := "0.0.2-SNAPSHOT",
+  version := "0.1-SNAPSHOT",
   scalaVersion := "2.11.6",
-  scalacOptions ++= Seq("-deprecation","-unchecked","-feature","-Xlint")
+  scalacOptions ++= Seq("-deprecation","-unchecked","-feature","-Xlint"),
+  libraryDependencies ++= Seq(
+    "com.lihaoyi" %%% "utest" % "0.3.1" % "test"
+  ),
+  testFrameworks += new TestFramework("utest.runner.Framework")
 )
 
 lazy val root = project.in(file(".")).
-  aggregate(surfJS, surfJVM, akka, servlet).
+  //aggregate(surfJS, surfJVM, akka, servlet).
+  aggregate(coreJVM, coreJS).
   settings(commonSettings:_*).
   settings(
+    name := "surf",
     publish := {},
     publishLocal := {}
   )
 
-lazy val surf = crossProject.in(file(".")).
+lazy val core = crossProject.
   settings(commonSettings:_*).
   settings(publishingSettings:_*).
   settings(
-    name := "surf",
+    name := "surf-core",
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %% "upickle" % "0.2.8",
-      "com.lihaoyi" %%% "utest" % "0.3.1" % "test"
-    ),
-    testFrameworks += new TestFramework("utest.runner.Framework")
+      "com.lihaoyi" %% "upickle" % "0.2.8"
+    )
   ).
   jvmSettings(
   ).
@@ -34,10 +38,10 @@ lazy val surf = crossProject.in(file(".")).
 
 
 
-lazy val surfJVM = surf.jvm
-lazy val surfJS = surf.js
+lazy val coreJVM = core.jvm
+lazy val coreJS = core.js
 
-
+/*
 lazy val akka = project.
   dependsOn( surfJVM ).
   settings(commonSettings:_*).
@@ -71,7 +75,7 @@ lazy val servlet = project.
       "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided"
     )
   )
-    
+  */  
 
 lazy val publishingSettings = Seq(
   publishMavenStyle := true,

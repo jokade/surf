@@ -1,5 +1,5 @@
 // -   Project: surf (https://github.com/jokade/surf)
-//      Module: shared
+//      Module: core / shared
 // Description: A Completable holds the response to a request
 //
 // Copyright (c) 2015 Johannes Kastner <jokade@karchedon.de>
