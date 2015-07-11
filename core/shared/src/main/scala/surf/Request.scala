@@ -38,7 +38,7 @@ trait Request extends Completable {
    *
    * @param response Response data
    */
-  final def !(response: Any) : Unit = success(response)
+  @inline final def !(response: Any) : Unit = success(response)
 
   /**
    * Sends the current request to the specified service.
@@ -47,31 +47,47 @@ trait Request extends Completable {
    *
    * @return the response (request object returned by the service).
    */
-  final def >>(service: ServiceRef) : Request = {
-    service ! this
-  }
+  @inline final def >>(service: ServiceRef) : Request = service ! this
 
-  def mapInput(fInput: (Any)=>Any) : Request = map(fInput)( x=>x )
+  /**
+   * Creates an updated request from the current one, where [[input]] is replaced with the
+   * result from `fInput(input)`.
+   *
+   * @param f
+   * @return updated reuqest
+   */
+  def mapInput(f: (Any)=>Any) : Request = map(f)( x=>x )
 
   /**
    * Creates an updated request from the current one, where [[input]] is replaced
    * with the specified value.
    *
    * @param input value for [[input]] in updated request
-   * @return Updated reuqest
    */
   def withInput(input: Any) : Request = mapInput( _ => input)
 
-  def mapOutput(fOutput: (Any)=>Any) : Request = map( x=>x )(fOutput)
+  /**
+   * Creates an updated request from the current one, where the response will be transformed by `f(response)`.
+   *
+   * @param f function used to transform the response message __before__ it is used to complete the request.
+   *
+   * @see [[map()]]
+   */
+  def mapOutput(f: (Any)=>Any) : Request = map( x=>x )(f)
 
   /**
    * Returns a new request with the same completion target as the current request,
-   * but the original input is transformed by ```fInput```, and the response is transformed by ```fOutput```.
+   * but the original input is transformed by `fIn`, and the response is transformed by `fOut`.
    *
-   * @param fInput
-   * @param fOutput
+   * @note The response message is transformed __before__ it is used to complete the request;
+   *       hence, all response listeners registered to the underlying Completable will receive the
+   *       transformed response, even those that were registered on another request in the current
+   *       request chain.
+   *
+   * @param fIn function to transform the input message with
+   * @param fOut function to transform the repsonse with
    */
-  def map(fInput: (Any) => Any)(fOutput: (Any) => Any) : Request
+  def map(fIn: (Any) => Any)(fOut: (Any) => Any) : Request
 
   override def onComplete(f: PartialFunction[Try[Any],Any]) : Request
   override def onSuccess(f: PartialFunction[Any,Any]) : Request
@@ -81,37 +97,38 @@ trait Request extends Completable {
 object Request {
   def apply(input: Any)(implicit cf: CompletableFactory) : Request = Impl(input, cf.createCompletable(),Map(),null)
 
-  def apply(input: Any, target: Completable, annotations: Map[String,Any] = Map(), mapResponse: (Any)=>Any = null) : Request =
-    Impl(input,target,annotations,mapResponse)
+  def apply(input: Any, target: Completable, annotations: Map[String,Any] = Map(), mapResponse: (Any)=>Any = null)
+           (implicit cf: CompletableFactory): Request = Impl(input,target,annotations,mapResponse)
 
-  case class Impl(input: Any, target: Completable, annotations: Map[String,Any], mapResponse: (Any) => Any) extends Request {
-    final override def withAnnotations(f: Map[String,Any]=>Map[String,Any]) = Request(input,target, f(annotations),mapResponse)
-    final override def isCompleted: Boolean = target.isCompleted
-    final override def future: Future[Any] = target.future
-    final override def complete(resp: Response): Unit =
+  case class Impl(input: Any, target: Completable, annotations: Map[String,Any], mapResponse: (Any) => Any)
+                 (implicit cf: CompletableFactory) extends Request {
+    @inline final override def withAnnotations(f: Map[String,Any]=>Map[String,Any]) = Request(input,target, f(annotations),mapResponse)
+    @inline final override def isCompleted: Boolean = target.isCompleted
+    @inline final override def future: Future[Any] = target.future
+    @inline final override def complete(resp: Response): Unit =
       if(mapResponse==null)
         target.complete(resp)
       else
         target.complete(resp.map(mapResponse))
-    final override def mapInput(fInput: (Any)=>Any) = Request(fInput(input),target,annotations,mapResponse)
-    final override def map(fInput: (Any) => Any)(fOutput: (Any)=>Any) = Request(fInput(input),target,annotations,
+    @inline final override def mapInput(fInput: (Any)=>Any) = Request(fInput(input),target,annotations,mapResponse)
+    @inline final override def map(fInput: (Any) => Any)(fOutput: (Any)=>Any) = Request(fInput(input),target,annotations,
       if(mapResponse==null) fOutput else fOutput andThen mapResponse)
-    final override def onComplete(f: PartialFunction[Try[Any],Any]) = {target.onComplete(f);this}
-    final override def onSuccess(f: PartialFunction[Any,Any]) = {target.onSuccess(f);this}
-    final override def onFailure(f: PartialFunction[Throwable,Any]) = {target.onFailure(f);this}
+    @inline final override def onComplete(f: PartialFunction[Try[Any],Any]) = {target.onComplete(f);this}
+    @inline final override def onSuccess(f: PartialFunction[Any,Any]) = {target.onSuccess(f);this}
+    @inline final override def onFailure(f: PartialFunction[Throwable,Any]) = {target.onFailure(f);this}
   }
 
   object NullRequest extends Request {
-    override final def input: Any = None
-    override final def annotations = Map.empty[String,Any]
-    override final def withAnnotations(f: Map[String,Any]=>Map[String,Any]) = throw new RuntimeException("Cannot annotate NullRequest")
-    override final def map(fInput: (Any) => Any)(fOutput: (Any)=>Any): Request = throw new RuntimeException("Cannot map NullRequest")
-    override final def isCompleted: Boolean = false
-    override final def future: Future[Any] = throw new RuntimeException(s"No future for NullRequest")
-    override final def complete(resp: Response): Unit = throw new RuntimeException(s"Cannot complete NullRequest")
-    override final def onComplete(f: PartialFunction[Try[Any],Any]) = throw new RuntimeException("NullRequest will not complete")
-    override final def onSuccess(f: PartialFunction[Any,Any]) = throw new RuntimeException("NullRequest will not complete")
-    override final def onFailure(f: PartialFunction[Throwable,Any]) = throw new RuntimeException("NullRequest will not complete")
+    @inline override final def input: Any = None
+    @inline override final def annotations = Map.empty[String,Any]
+    @inline override final def withAnnotations(f: Map[String,Any]=>Map[String,Any]) = throw new RuntimeException("Cannot annotate NullRequest")
+    @inline override final def map(fInput: (Any) => Any)(fOutput: (Any)=>Any): Request = throw new RuntimeException("Cannot map NullRequest")
+    @inline override final def isCompleted: Boolean = false
+    @inline override final def future: Future[Any] = throw new RuntimeException(s"No future for NullRequest")
+    @inline override final def complete(resp: Response): Unit = throw new RuntimeException(s"Cannot complete NullRequest")
+    @inline override final def onComplete(f: PartialFunction[Try[Any],Any]) = throw new RuntimeException("NullRequest will not complete")
+    @inline override final def onSuccess(f: PartialFunction[Any,Any]) = throw new RuntimeException("NullRequest will not complete")
+    @inline override final def onFailure(f: PartialFunction[Throwable,Any]) = throw new RuntimeException("NullRequest will not complete")
   }
 
   case class Proxy(req: Request, next: ServiceRef) extends Request {

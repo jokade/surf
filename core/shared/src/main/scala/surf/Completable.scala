@@ -87,7 +87,7 @@ object Completable {
 
   case class RequestAlreadyCompletedException(completer: Completable) extends RuntimeException(s"Request has already been completed!")
 
-  case object EmptyCompleted extends Completable {
+  object EmptyCompleted extends Completable {
     val isCompleted: Boolean = true
     val future: Future[Option[Any]] = Future.successful(None)
     override def complete(resp: Response): Unit = throw RequestAlreadyCompletedException(this)

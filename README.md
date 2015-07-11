@@ -1,7 +1,9 @@
 surf
 ====
 
-A simple message-passing and request-flow library compatible to akka actors for ScalaJVM and ScalaJS
+A simple library for actor-style message passing and request-flow processing for Scala/JVM and Scala.js.
+On the JVM, surf is simply a thin abstraction layer on top of [Akka](http://akka.io).
+
 
 License
 -------
