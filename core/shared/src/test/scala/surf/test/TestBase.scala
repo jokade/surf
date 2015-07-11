@@ -21,4 +21,6 @@ trait TestBase extends TestSuite {
       case ExpectedFailure => Future.failed(ExpectedFailure)
       case ex:Throwable => Future.successful(ex)
     }
+
+  def merge(fs: Future[Any]*)(implicit ec: ExecutionContext): Future[Any] = Future.reduce(fs)((_,_)=>true)
 }

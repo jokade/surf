@@ -7,7 +7,7 @@
 package surf
 
 /**
- * Configuration object used in creating a [[Service]]
+ * Configuration object used by [[ServiceRefFactory]]S to create [[ServiceRef]]S.
  */
 trait ServiceProps {
   def createService() : Service

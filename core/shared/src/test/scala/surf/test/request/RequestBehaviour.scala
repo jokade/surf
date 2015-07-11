@@ -108,5 +108,4 @@ trait RequestBehaviour extends TestBase {
     }
   }
 
-  private def merge(fs: Future[Any]*): Future[Any] = Future.reduce(fs)((_,_)=>true)
 }

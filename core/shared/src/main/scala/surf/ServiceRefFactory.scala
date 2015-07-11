@@ -25,9 +25,9 @@ object ServiceRefFactory {
    * on the thread from where the message is sent. Hence
    * ```service ! msg``` is equivalent to ```service.process(msg)```
    */
-  lazy val Static : ServiceRefFactory = new StaticServiceRefFactory
+  lazy val Sync : ServiceRefFactory = new SyncServiceRefFactory
 
-  class StaticServiceRefFactory extends ServiceRefFactory {
+  class SyncServiceRefFactory extends ServiceRefFactory {
     override def serviceOf(props: ServiceProps) = new SyncServiceWrapper(props.createService())
   }
 

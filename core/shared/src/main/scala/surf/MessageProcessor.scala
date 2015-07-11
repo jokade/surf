@@ -31,6 +31,6 @@ trait MessageProcessor {
 object MessageProcessor {
   type Processor = PartialFunction[Any,Unit]
 
-  case class CannotProcessFlowException(processor: Any, flow: Any) extends RuntimeException("Cannot process flow")
+  //case class CannotProcessFlowException(processor: Any, flow: Any) extends RuntimeException("Cannot process flow")
 
 }

@@ -14,11 +14,22 @@ import surf.Request.NullRequest
 abstract class Service extends MessageProcessor {
   private var _req : Request = NullRequest
   private var _self : ServiceRef = _
+
+  /**
+   * [[ServiceRef]] for this Service instance.
+   */
   def self: ServiceRef = _self
+
   protected[surf] def self_=(ref: ServiceRef) = this.synchronized( _self = ref )
-  def handleException(ex: Throwable) : Unit = {
-    Console.err.println(ex.toString)
-  }
+
+  /**
+   * Called when an exception occurs while executing [[process]].
+   * The default implementation prints the exception to stderr.
+   *
+   * @param ex
+   */
+  def handleException(ex: Throwable) : Unit = { Console.err.println(ex) }
+
   final override def request : Request = _req
   final override def isRequest : Boolean = _req != NullRequest
   final def handle(req: Request, data: Any): Unit = {

@@ -85,12 +85,12 @@ object Completable {
    */
   type Response = Try[Any]
 
-  case class RequestAlreadyCompletedException(completer: Completable) extends RuntimeException(s"Request has already been completed!")
+  class RequestAlreadyCompletedException(completer: Completable) extends RuntimeException(s"Request has already been completed!")
 
   object EmptyCompleted extends Completable {
     val isCompleted: Boolean = true
     val future: Future[Option[Any]] = Future.successful(None)
-    override def complete(resp: Response): Unit = throw RequestAlreadyCompletedException(this)
+    override def complete(resp: Response): Unit = throw new RequestAlreadyCompletedException(this)
     override def onComplete(f: PartialFunction[Try[Any], Any]): Completable = {f(Success(None));this}
     override def onSuccess(f: PartialFunction[Any, Any]): Completable = {f(None);this}
     override def onFailure(f: PartialFunction[Throwable, Any]): Completable = this
