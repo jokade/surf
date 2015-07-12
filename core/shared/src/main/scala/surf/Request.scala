@@ -76,6 +76,13 @@ trait Request extends Completable {
   def mapOutput(f: (Any)=>Any) : Request = map( x=>x )(f)
 
   /**
+   * Alias for [[mapOutput()]] (used in the DSL)
+   *
+   * @param f function used to transform the response massage __before__ it is used to complete the request.
+   */
+  //@inline final def >>(f: PartialFunction[Any,Any]) : Request = mapOutput(f)
+
+  /**
    * Returns a new request with the same completion target as the current request,
    * but the original input is transformed by `fIn`, and the response is transformed by `fOut`.
    *
