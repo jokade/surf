@@ -6,9 +6,9 @@
 //               Distributed under the MIT license (see included LICENSE file)
 package surf.test.service
 
-import surf.{CompletableFactory, ServiceProps, ServiceRef, ServiceRefFactory}
+import surf.{ServiceProps, ServiceRef, ServiceRefFactory}
 
 object SyncServiceRefFactoryTest extends ServiceRefBehaviour {
-  override implicit val cf: CompletableFactory = surf.Implicits.globalCF
+  implicit def ec = concurrent.ExecutionContext.global
   override def createEUT(props: ServiceProps): ServiceRef = ServiceRefFactory.Sync.serviceOf(props)
 }

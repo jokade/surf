@@ -6,8 +6,8 @@
 //               Distributed under the MIT license (see included LICENSE file)
 package surf
 
-import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext}
 
 /**
  * Directives for the surf request flow DSL.
@@ -45,7 +45,7 @@ package object dsl {
    * @param data
    */
   implicit class AnyToRequest(val data: Any) extends AnyVal {
-    def >>(ref: ServiceRef)(implicit cf: CompletableFactory) : Request = {
+    def >>(ref: ServiceRef)(implicit ec: ExecutionContext) : Request = {
       ref ! Request(data)
     }
   }

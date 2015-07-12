@@ -8,13 +8,14 @@ package surf
 
 import surf.Completable.Response
 
-import scala.concurrent.Future
+import scala.concurrent.{Promise, ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 /**
  * A completable request that provides access to the corresponding response in a future.
  */
-trait Request extends Completable {
+trait Request {
+  type Response = Try[Any]
 
   /**
    * The request message.
@@ -67,9 +68,9 @@ trait Request extends Completable {
   def withInput(input: Any) : Request = mapInput( _ => input)
 
   /**
-   * Creates an updated request from the current one, where the response will be transformed by `f(response)`.
+   * Creates an updated request from the current one, where the response will be transformed by sepcified function.
    *
-   * @param f function used to transform the response message __before__ it is used to complete the request.
+   * @param f function used to transform the response message
    *
    * @see [[map()]]
    */
@@ -86,43 +87,94 @@ trait Request extends Completable {
    * Returns a new request with the same completion target as the current request,
    * but the original input is transformed by `fIn`, and the response is transformed by `fOut`.
    *
-   * @note The response message is transformed __before__ it is used to complete the request;
-   *       hence, all response listeners registered to the underlying Completable will receive the
-   *       transformed response, even those that were registered on another request in the current
-   *       request chain.
-   *
    * @param fIn function to transform the input message with
-   * @param fOut function to transform the repsonse with
+   * @param fOut function to transform the response with
    */
   def map(fIn: (Any) => Any)(fOut: (Any) => Any) : Request
 
-  override def onComplete(f: PartialFunction[Try[Any],Any]) : Request
-  override def onSuccess(f: PartialFunction[Any,Any]) : Request
-  override def onFailure(f: PartialFunction[Throwable,Any]) : Request
+  /**
+   * Returns true iff the request has been completed
+   */
+  def isCompleted: Boolean
+
+  /**
+   * Completes the request (flow) with the provided Response.
+   *
+   * @note A request can only be completed once!
+   *
+   * @param resp either a successful response or a failure.
+   *
+   * @throws RequestAlreadyCompletedException if the request has already been completed
+   */
+  def complete(resp: Response) : Unit
+
+  /**
+   * Completes the request (flow) with a failure
+   *
+   * @param ex Exception indicating the failure
+   *
+   * @throws RequestAlreadyCompletedException if the request has already been completed
+   */
+  @inline final def failure(ex: Throwable) : Unit = complete(Failure(ex))
+
+  /**
+   * Completes the request (flow) successfully with the provided response result.
+   *
+   * @param result The result data object
+   *
+   * @throws RequestAlreadyCompletedException if the request has already been completed
+   */
+  @inline final def success(result: Any) : Unit = complete(Success(result))
+
+  /**
+   * Returns a Future that will be completed when this request (flow) is completed.
+   */
+  def future : Future[Any]
+
+  /**
+   * The provided function is called when the request is completed
+   *
+   * @param f function to be called on completion
+   */
+  def onComplete(f: PartialFunction[Try[Any],Any]) : Request
+
+  /**
+   * The specified function is called when the request is completed successfully
+   *
+   * @param f function to be called on successful completion
+   */
+  def onSuccess(f: PartialFunction[Any,Any]) : Request
+
+  /**
+   * The specified function is called when the request fails.
+   *
+   * @param f function to be called on failure.
+   */
+  def onFailure(f: PartialFunction[Throwable,Any]) : Request
+
 }
 
 object Request {
-  def apply(input: Any)(implicit cf: CompletableFactory) : Request = Impl(input, cf.createCompletable(),Map(),null)
+  def apply(input: Any)(implicit ec: ExecutionContext) : Request = Impl(input, Promise[Any](),Map(),null)
 
-  def apply(input: Any, target: Completable, annotations: Map[String,Any] = Map(), mapResponse: (Any)=>Any = null)
-           (implicit cf: CompletableFactory): Request = Impl(input,target,annotations,mapResponse)
+  def apply(input: Any, target: Promise[Any], annotations: Map[String,Any] = Map(), mapResponse: (Any)=>Any = null)
+           (implicit ec: ExecutionContext): Request = Impl(input,target,annotations,mapResponse)
 
-  case class Impl(input: Any, target: Completable, annotations: Map[String,Any], mapResponse: (Any) => Any)
-                 (implicit cf: CompletableFactory) extends Request {
+
+  case class Impl(input: Any, target: Promise[Any], annotations: Map[String,Any], mapResponse: (Any) => Any)
+                 (implicit ec: ExecutionContext) extends Request {
     @inline final override def withAnnotations(f: Map[String,Any]=>Map[String,Any]) = Request(input,target, f(annotations),mapResponse)
     @inline final override def isCompleted: Boolean = target.isCompleted
-    @inline final override def future: Future[Any] = target.future
-    @inline final override def complete(resp: Response): Unit =
-      if(mapResponse==null)
-        target.complete(resp)
-      else
-        target.complete(resp.map(mapResponse))
+    final lazy val future: Future[Any] =
+      if(mapResponse==null) target.future
+      else target.future.map(mapResponse)
+    @inline final override def complete(resp: Response): Unit = target.complete(resp)
     @inline final override def mapInput(fInput: (Any)=>Any) = Request(fInput(input),target,annotations,mapResponse)
     @inline final override def map(fInput: (Any) => Any)(fOutput: (Any)=>Any) = Request(fInput(input),target,annotations,
-      if(mapResponse==null) fOutput else fOutput andThen mapResponse)
-    @inline final override def onComplete(f: PartialFunction[Try[Any],Any]) = {target.onComplete(f);this}
-    @inline final override def onSuccess(f: PartialFunction[Any,Any]) = {target.onSuccess(f);this}
-    @inline final override def onFailure(f: PartialFunction[Throwable,Any]) = {target.onFailure(f);this}
+      if(mapResponse==null) fOutput else mapResponse andThen fOutput)
+    @inline final override def onComplete(f: PartialFunction[Try[Any],Any]) = {future.onComplete(f);this}
+    @inline final override def onSuccess(f: PartialFunction[Any,Any]) = {future.onSuccess(f);this}
+    @inline final override def onFailure(f: PartialFunction[Throwable,Any]) = {future.onFailure(f);this}
   }
 
   object NullRequest extends Request {
@@ -153,5 +205,6 @@ object Request {
       case Failure(ex) => req.failure(ex)
     }
   }
+
 }
 

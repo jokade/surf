@@ -14,7 +14,7 @@ import scala.concurrent.{Future, Await}
 import scala.concurrent.duration.Duration
 import scala.language.implicitConversions
 import scala.util.{Try, Failure, Success}
-
+/*
 trait Directives {
 
   implicit class RequestDSL(data: Any) {
@@ -85,4 +85,4 @@ trait Directives {
 }
 
 object Directives extends Directives
-
+*/

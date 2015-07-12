@@ -10,11 +10,10 @@ import surf.test.TestBase
 import surf._
 import utest._
 
-import scala.concurrent.Promise
+import scala.concurrent.{ExecutionContext, Promise}
 
 trait ServiceRefBehaviour extends TestBase {
-  implicit val cf: CompletableFactory
-  import cf.executionContext
+  implicit def ec: ExecutionContext
   def createEUT(props: ServiceProps) : ServiceRef
 
   val tests = TestSuite {

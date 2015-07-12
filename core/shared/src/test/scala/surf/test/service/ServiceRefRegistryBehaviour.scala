@@ -12,8 +12,7 @@ import surf.test.TestBase
 import utest._
 
 trait ServiceRefRegistryBehaviour extends TestBase {
-  import surf.Implicits.globalCF
-  import globalCF.executionContext
+  import concurrent.ExecutionContext.Implicits.global
   def factory: ServiceRefFactory
   def createEUT(factory: ServiceRefFactory): ServiceRefRegistry
 

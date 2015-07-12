@@ -12,16 +12,17 @@ import surf.test.TestBase
 import surf.dsl._
 import utest._
 
+import scala.concurrent.ExecutionContext
+
 object DSLTest extends DSLBehaviour {
-  implicit def cf = surf.Implicits.globalCF
+  implicit def ec = concurrent.ExecutionContext.global
   val factory = new SyncServiceRefFactory
   def serviceRef(s: => Service): ServiceRef = factory.serviceOf(ServiceProps(s))
 }
 
 
 trait DSLBehaviour extends TestBase {
-  implicit def cf: CompletableFactory
-  implicit def executionContext = cf.executionContext
+  implicit def ec: ExecutionContext
   def serviceRef(s: => Service): ServiceRef
   val tests = TestSuite {
     val incService = serviceRef(new IncService)

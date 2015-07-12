@@ -6,20 +6,13 @@
 //               Distributed under the MIT license (see included LICENSE file)
 package surf.test.request
 
-import surf.{CompletableFactory, Request, Completable}
-import surf.test.completable.CompletableBehaviour
-import utest.TestSuite
+import surf.Request
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Promise}
 
-abstract class RequestImplTestFixture extends TestSuite {
-  implicit def executionContext: ExecutionContext = surf.Implicits.globalCF.executionContext
-  implicit def completableFactory: CompletableFactory = surf.Implicits.globalCF
+object RequestImplTest extends RequestBehaviour {
+  implicit def executionContext: ExecutionContext = concurrent.ExecutionContext.global
 
-  def createEUT(): Completable = Request(None)
-  def createEUT(msg: Any, annotations: Map[String,Any]): Request = Request(msg,completableFactory.createCompletable(),annotations)
+  def createEUT(msg: Any, annotations: Map[String,Any]): Request = Request(msg,Promise[Any](),annotations)
 }
 
-object RequestImplTest1 extends RequestImplTestFixture with CompletableBehaviour
-
-object RequestImplTest2 extends RequestImplTestFixture with RequestBehaviour

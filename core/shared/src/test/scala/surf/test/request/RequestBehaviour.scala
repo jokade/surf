@@ -10,15 +10,65 @@ import surf.test.TestBase
 import surf.{CompletableFactory, Request}
 import utest._
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.{Promise, Future, ExecutionContext}
+import scala.util.{Success, Failure}
 
 trait RequestBehaviour extends TestBase {
   implicit def executionContext: ExecutionContext
-  implicit def completableFactory: CompletableFactory
   def createEUT(msg: Any, annotations: Map[String,Any]): Request
 
   val tests = TestSuite {
     val eut = createEUT("msg", Map("int"->42))
+
+    'success-{
+      val f = eut.future
+      eut.success("OK")
+      f.map {
+        case msg => assert( msg == "OK", eut.isCompleted )
+      }
+    }
+
+    'failure-{
+      val f = eut.future
+      eut.failure(Ex)
+      expectFailure(f)
+    }
+
+    'onComplete-{
+      'success-{
+        val p = Promise[Any]()
+        eut.onComplete{ case Success(msg) =>
+          assert( msg == "OK", eut.isCompleted )
+          p.success(true)
+        }
+        eut.success("OK")
+        p.future
+      }
+      'failure-{
+        val p = Promise[Any]()
+        eut.onComplete{ case Failure(Ex) => p.success(true) }
+        eut.failure(Ex)
+        p.future
+      }
+    }
+
+    'onSuccess_onFailure-{
+      'success-{
+        val p = Promise[Any]()
+        eut.onSuccess{ case msg => assert( msg == "OK", eut.isCompleted ); p.success(true) }
+        eut.onFailure{ case _ => p.failure(Ex) }
+        eut.success("OK")
+        p.future
+      }
+      'failure-{
+        val p = Promise[Any]()
+        eut.onFailure{ case Ex => p.success(true) }
+        eut.onSuccess{ case _ => p.failure(Ex) }
+        eut.failure(Ex)
+        p.future
+      }
+    }
+
 
     'input-{
       assert( eut.input == "msg" )
@@ -75,14 +125,14 @@ trait RequestBehaviour extends TestBase {
     }
 
     'mapOutput-{
-      val mapped = eut.mapOutput{ case "msg" => 44 }
-      val mapped2 = mapped.mapOutput{ case "msg" => true }
+      val mapped = eut.mapOutput{ case "msg" => 44; case x => x }
+      val mapped2 = mapped.mapOutput{ case 44 => true }
       assert( !eut.isCompleted, !mapped.isCompleted, !mapped2.isCompleted )
 
       "!eut"-{
         val f1 = eut.future.map{ case m => assert(m=="msg") }
-        val f2 = mapped.future.map{ case m => assert(m == "msg") }
-        val f3 = mapped2.future.map{ case m => assert(m == "msg") }
+        val f2 = mapped.future.map{ case m => assert(m == 44) }
+        val f3 = mapped2.future.map{ case m => assert(m == true) }
         eut ! "msg"
         merge(f1,f2,f3)
       }
@@ -90,8 +140,8 @@ trait RequestBehaviour extends TestBase {
       "!mapped"-{
         val f1 = eut.future.map{ case m => assert(m==44) }
         val f2 = mapped.future.map{ case m => assert(m==44) }
-        val f3 = mapped2.future.map{ case m => assert(m==44) }
-        mapped ! "msg"
+        val f3 = mapped2.future.map{ case m => assert(m==true) }
+        mapped ! 44
         merge(f1,f2,f3)
       }
     }

@@ -99,12 +99,12 @@ object Completable {
   class PromiseCompletable(implicit ec: ExecutionContext) extends Completable {
     private val _promise = Promise[Any]()
 
-    override def isCompleted: Boolean = _promise.isCompleted
-    override def future: Future[Any] = _promise.future
-    override def complete(resp: Response): Unit = _promise.complete(resp)
-    override def onComplete(f: PartialFunction[Try[Any], Any]) = {future.onComplete(f);this}
-    override def onSuccess(f: PartialFunction[Any, Any]) = {future.onSuccess(f);this}
-    override def onFailure(f: PartialFunction[Throwable, Any]) = {future.onFailure(f);this}
+    @inline final override def isCompleted: Boolean = _promise.isCompleted
+    @inline final override def future: Future[Any] = _promise.future
+    @inline final override def complete(resp: Response): Unit = _promise.complete(resp)
+    @inline final override def onComplete(f: PartialFunction[Try[Any], Any]) = {future.onComplete(f);this}
+    @inline final override def onSuccess(f: PartialFunction[Any, Any]) = {future.onSuccess(f);this}
+    @inline final override def onFailure(f: PartialFunction[Throwable, Any]) = {future.onFailure(f);this}
   }
 
 }

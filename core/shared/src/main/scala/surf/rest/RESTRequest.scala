@@ -8,6 +8,8 @@ package surf.rest
 
 import surf.{CompletableFactory, Request}
 
+import scala.concurrent.ExecutionContext
+
 /**
  * Factory for REST RequestS
  */
@@ -16,21 +18,21 @@ object RESTRequest {
 
   def GETRequest(resource: RESTResource,
                  params: RequestParams = Map.empty)
-                (implicit cf: CompletableFactory) : Request = Request(GET(resource,params))
+                (implicit ec: ExecutionContext) : Request = Request(GET(resource,params))
 
   def PUTRequest(resource: RESTResource,
                  params: RequestParams = Map.empty,
                  body: String = "")
-                (implicit cf: CompletableFactory) : Request = Request(PUT(resource,params,body))
+                (implicit ec: ExecutionContext) : Request = Request(PUT(resource,params,body))
 
   def POSTRequest(resource: RESTResource,
                   params: RequestParams = Map.empty,
                   body: String = "")
-                 (implicit cf: CompletableFactory) : Request = Request(POST(resource,params,body))
+                 (implicit ec: ExecutionContext) : Request = Request(POST(resource,params,body))
 
   def DELETERequest(resource: RESTResource,
                     params: RequestParams = Map.empty)
-                   (implicit cf: CompletableFactory) : Request = Request(DELETE(resource,params))
+                   (implicit ec: ExecutionContext) : Request = Request(DELETE(resource,params))
 
 
   object BooleanParam {
