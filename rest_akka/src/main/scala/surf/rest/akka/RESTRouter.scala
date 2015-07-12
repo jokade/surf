@@ -4,25 +4,28 @@
 //
 // Copyright (c) 2015 Johannes Kastner <jokade@karchedon.de>
 //               Distributed under the MIT License (see included file LICENSE)
-package surf.akka.rest
+package surf.rest.akka
 
-import akka.http.scaladsl.model.{StatusCodes, HttpResponse}
+import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
+import akka.http.scaladsl.server
+import akka.http.scaladsl.server.Directives._
 import akka.stream.FlowMaterializer
+import surf.rest.RESTResponse._
+import surf.rest.{RESTRequest, RESTResource}
+import surf.{Request, ServiceRefFactory}
 
+import scala.Error
 import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
-import akka.http.scaladsl.server
-import server.Directives._
-import surf.{ServiceRefFactory, CompleterFactory, Request}
 
 /**
  * Factory for akka-http routes to handle requests to [[RESTResource]]S
  */
 object RESTRouter {
+  import RESTRequest._
 
   def apply(prefix: String, root: RESTResource)
-           (implicit cf: CompleterFactory, sf: ServiceRefFactory, ec: ExecutionContext, fm: FlowMaterializer) : server.Route = {
-    import RESTRequest._
+           (implicit sf: ServiceRefFactory, ec: ExecutionContext, fm: FlowMaterializer) : server.Route = {
 
     pathPrefix(prefix) {
       pathEnd {
@@ -55,7 +58,6 @@ object RESTRouter {
   }
 
   implicit def handleRequest(req: Request)(implicit ec: ExecutionContext) : server.Route = {
-    import RESTResponseMarshaller._
 
     onSuccess(req.future) {
       case ok: OK => complete(ok)

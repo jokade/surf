@@ -6,14 +6,16 @@
 //               Distributed under the MIT License (see included file LICENSE)
 package surf.rest.servlet
 
-import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
 import surf.Request
+import surf.rest.RESTResource
+import surf.rest.RESTResponse._
 
-import scala.annotation.tailrec
+import scala.Error
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import scala.util.{Success, Failure, Try}
+import scala.util.{Failure, Success}
 
 abstract class SyncRESTServlet extends RESTServlet.Base {
   private val timeout = Duration(5,"seconds")

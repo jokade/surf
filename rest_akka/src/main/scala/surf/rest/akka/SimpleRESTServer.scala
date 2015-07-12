@@ -4,20 +4,17 @@
 //
 // Copyright (c) 2015 Johannes Kastner <jokade@karchedon.de>
 //               Distributed under the MIT License (see included file LICENSE)
-package surf.akka.rest
+package surf.rest.akka
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.{Http, server}
 import akka.stream.scaladsl.Sink
+import akka.stream.{ActorFlowMaterializer, FlowMaterializer}
 import surf.akka.ServiceActorRefFactory
 
+import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
-import akka.actor.ActorSystem
-import akka.http.scaladsl.{server, Http}
-import server.Directives._
-import akka.stream.{ActorFlowMaterializer, FlowMaterializer}
-import surf.{Request, CompleterFactory}
-
-import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Starts a simple HTTP server handling the specified list of top-level RESTResources.
@@ -57,7 +54,6 @@ object SimpleRESTServer {
 
     implicit val system = ActorSystem("rest")
     implicit val materializer = ActorFlowMaterializer()
-    import system.dispatcher
 
     //implicit val materializer = FlowMaterializer()
     implicit val serviceRefFactory = ServiceActorRefFactory(system)

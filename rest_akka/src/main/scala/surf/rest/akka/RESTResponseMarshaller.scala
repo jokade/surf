@@ -4,13 +4,14 @@
 //
 // Copyright (c) 2015 Johannes Kastner <jokade@karchedon.de>
 //               Distributed under the MIT License (see included file LICENSE)
-package surf.akka.rest
+package surf.rest.akka
 
 import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaType}
+import surf.rest.{RESTContentType, RESTResponse}
+import surf.rest.RESTResponse.OK
 
 object RESTResponseMarshaller {
-  import akka.http.scaladsl.marshalling.ToEntityMarshaller
-  import akka.http.scaladsl.marshalling.Marshaller
+  import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
   val `text/html` = MediaType.custom("text/html",MediaType.Encoding.Open)
   val `application/json` = MediaType.custom("application/json",MediaType.Encoding.Open)
 

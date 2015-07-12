@@ -11,7 +11,7 @@ lazy val commonSettings = Seq(
 )
 
 lazy val root = project.in(file(".")).
-  aggregate(coreJVM, coreJS, restJVM, restJS, akka).
+  aggregate(coreJVM, coreJS, restJVM, restJS, akka, rest_servlet).
   settings(commonSettings:_*).
   settings(
     name := "surf",
@@ -62,20 +62,9 @@ lazy val akka = project.
     )
   )
 
-/*
-lazy val rest = project.
-  dependsOn( akka ).
-  settings(commonSettings:_*).
-  settings(publishingSettings:_*).
-  settings(
-    name := "surf-akka-rest",
-    libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-http-scala-experimental" % "1.0-RC2" exclude("com.typesafe.akka","akka-persistence-experimental_2.11")
-    )
-  )
 
-lazy val servlet = project.
-  dependsOn( surfJVM ).
+lazy val rest_servlet = project.
+  dependsOn( restJVM ).
   settings(commonSettings:_*).
   settings(publishingSettings:_*).
   settings(
@@ -84,7 +73,18 @@ lazy val servlet = project.
       "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided"
     )
   )
-  */  
+
+lazy val rest_akka = project.
+  dependsOn( restJVM, akka ).
+  settings(commonSettings:_*).
+  settings(publishingSettings:_*).
+  settings(
+    name := "surf-rest-akka",
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-http-scala-experimental" % "1.0-RC2" exclude("com.typesafe.akka","akka-persistence-experimental_2.11")
+    )
+  )
+
 
 lazy val publishingSettings = Seq(
   publishMavenStyle := true,

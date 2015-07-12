@@ -1,5 +1,5 @@
 // -   Project: surf (https://github.com/jokade/surf)
-//      Module: rest-servlet
+//      Module: rest_servlet
 // Description:
 //
 // Copyright (c) 2015 Johannes Kastner <jokade@karchedon.de>
@@ -8,19 +8,18 @@ package surf.rest.servlet
 
 import java.util.function.BinaryOperator
 import javax.servlet.AsyncContext
-import javax.servlet.http.{HttpServletResponse, HttpServletRequest, HttpServlet}
+import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 
+import surf.rest.{RESTRequest, RESTResource}
+import surf.rest.RESTResponse._
 import surf.{Request, ServiceRefFactory}
-import surf.CompleterFactory.Implicits.globalCF
-import surf.Directives._
-import collection.JavaConverters._
-import scala.collection.convert.Wrappers.JIterableWrapper
-import scala.collection.immutable.{AbstractMap, DefaultMap}
 
-import scala.util.{Try, Success, Failure}
+import scala.collection.JavaConverters._
+import scala.collection.immutable.{AbstractMap, DefaultMap}
+import scala.concurrent.ExecutionContext
+import scala.util.{Failure, Success, Try}
 
 abstract class RESTServlet extends RESTServlet.Base {
-  import surf.Directives._
 
   private def error(http: HttpServletResponse, async: AsyncContext, status: Int, msg: String): Unit = {
     http.setContentType("text/plain")
@@ -79,6 +78,8 @@ abstract class RESTServlet extends RESTServlet.Base {
 object RESTServlet {
   abstract class Base extends HttpServlet {
     import RESTRequest._
+
+    implicit def executionContext: ExecutionContext
 
     /**
      * Factory used to create ServiceRefS
