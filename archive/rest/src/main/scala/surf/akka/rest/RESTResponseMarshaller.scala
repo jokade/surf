@@ -7,8 +7,6 @@
 package surf.akka.rest
 
 import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaType}
-import surf.rest.{RESTContentType, RESTResponse}
-import surf.rest.RESTResponse.OK
 
 object RESTResponseMarshaller {
   import akka.http.scaladsl.marshalling.ToEntityMarshaller

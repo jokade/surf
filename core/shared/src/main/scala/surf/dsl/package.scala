@@ -57,4 +57,55 @@ package object dsl {
     def ::(left: ServiceRef) : ServicePipe = left :: service :: PipeEnd
   }
 
+  object transform {
+    /**
+     * Creates a ServiceRef that transforms the message of every request received.
+     *
+     * @param pf function used to transform the request message
+     */
+    def apply(pf: PartialFunction[Any,Any]) : ServiceRef = new Impl(pf)
+
+    private class Impl(pf: PartialFunction[Any,Any]) extends ServiceRef {
+      override def !(req: Request): Request = {
+        req ! pf(req.input)
+        req
+      }
+      override def !(msg: Any): Unit =
+        throw new RuntimeException(s"Cannot transform a command message (only Requests can be transformed)")
+    }
+  }
+
+  object annotate {
+    /**
+     * Adds the specified annotations to every Request received
+     *
+     * @param annotations (key,value) pairs to be added as annotations to every Request
+     */
+    def apply(annotations: (String,Any)*) : ServiceRef = new Impl(m => m++annotations)
+
+    /**
+     * Updates the map of annotations for every request received.
+     *
+     * @param f function that receives the current map of annotations and returns the updated map.
+     */
+    def apply(f: Map[String,Any]=>Map[String,Any]) : ServiceRef = new Impl(f)
+
+    protected[dsl] case class Impl(f: Map[String,Any]=>Map[String,Any]) extends ServiceRef {
+      override def !(req: Request): Request = {
+        req.withAnnotations(f)
+      }
+      override def !(msg: Any): Unit =
+        throw new RuntimeException(s"Cannot annotate a command message (only Requests can be annotated)")
+    }
+  }
+
+  object handle {
+    def apply(f: Request => Request) : ServiceRef = Impl(f)
+
+    protected[dsl] case class Impl(f: Request=>Request) extends ServiceRef {
+      override def !(req: Request): Request = f(req)
+      override def !(msg: Any): Unit =
+        throw new RuntimeException(s"Cannot annotate a command message (only Requests can be annotated)")
+    }
+  }
 }

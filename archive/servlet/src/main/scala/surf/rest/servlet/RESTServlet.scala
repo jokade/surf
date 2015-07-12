@@ -11,8 +11,6 @@ import javax.servlet.AsyncContext
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest, HttpServlet}
 
 import surf.{Request, ServiceRefFactory}
-import surf.rest.RESTResponse._
-import surf.rest.{RESTRequest, StaticRESTResource, RESTResource}
 import surf.CompleterFactory.Implicits.globalCF
 import surf.Directives._
 import collection.JavaConverters._

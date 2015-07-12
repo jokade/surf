@@ -6,9 +6,7 @@
 //               Distributed under the MIT License (see included LICENSE file)
 package surf
 
-import surf.Completable.Response
-
-import scala.concurrent.{Promise, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success, Try}
 
 /**

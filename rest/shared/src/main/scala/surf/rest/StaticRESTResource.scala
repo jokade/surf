@@ -7,7 +7,7 @@
 package surf.rest
 
 import surf.rest.RESTResponse.OK
-import surf.{Service, ServiceProps, ServiceRef, ServiceRefFactory}
+import surf.{ServiceProps, ServiceRef, ServiceRefFactory}
 
 class StaticRESTResource private(override val name: String,
                          val staticChildren: Map[String,RESTResource],

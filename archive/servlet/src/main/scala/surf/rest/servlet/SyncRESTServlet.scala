@@ -9,8 +9,6 @@ package surf.rest.servlet
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 
 import surf.Request
-import surf.rest.RESTResource
-import surf.rest.RESTResponse._
 
 import scala.annotation.tailrec
 import scala.concurrent.Await

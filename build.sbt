@@ -11,8 +11,7 @@ lazy val commonSettings = Seq(
 )
 
 lazy val root = project.in(file(".")).
-  //aggregate(surfJS, surfJVM, akka, servlet).
-  aggregate(coreJVM, coreJS).
+  aggregate(coreJVM, coreJS, restJVM, restJS, akka).
   settings(commonSettings:_*).
   settings(
     name := "surf",
@@ -24,10 +23,7 @@ lazy val core = crossProject.
   settings(commonSettings:_*).
   settings(publishingSettings:_*).
   settings(
-    name := "surf-core",
-    libraryDependencies ++= Seq(
-      "com.lihaoyi" %% "upickle" % "0.2.8"
-    )
+    name := "surf-core"
   ).
   jvmSettings(
   ).
@@ -36,14 +32,27 @@ lazy val core = crossProject.
     //postLinkJSEnv := NodeJSEnv().value
   )
 
-
-
 lazy val coreJVM = core.jvm
 lazy val coreJS = core.js
 
-/*
+
+lazy val rest = crossProject.
+  dependsOn(core).
+  settings(commonSettings:_*).
+  settings(publishingSettings:_*).
+  settings(
+    name := "surf-rest",
+    libraryDependencies ++= Seq(
+      "com.lihaoyi" %% "upickle" % "0.2.8"
+    )
+  )
+
+lazy val restJVM = rest.jvm
+lazy val restJS = rest.js
+
+
 lazy val akka = project.
-  dependsOn( surfJVM ).
+  dependsOn( coreJVM % "compile->compile;test->test" ).
   settings(commonSettings:_*).
   settings(publishingSettings:_*).
   settings(
@@ -53,7 +62,7 @@ lazy val akka = project.
     )
   )
 
-
+/*
 lazy val rest = project.
   dependsOn( akka ).
   settings(commonSettings:_*).

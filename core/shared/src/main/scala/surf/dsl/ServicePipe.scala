@@ -19,15 +19,11 @@ case object PipeEnd extends ServicePipe {
 
 case class PipeCons(head: ServiceRef, tail: ServicePipe) extends ServicePipe {
   override def !(msg: Any) : Unit = head ! msg
-  override def !(req: Request) = tail match {
-    case PipeEnd => req >> head
-   /* case PipeCons(Annotate(pf),tail) =>
-      if(pf.isDefinedAt(req.input))
-        req.withAnnotations(as => as ++ pf(req.input)) >> tail
-      else
-        req >> tail*/
-    case next: PipeCons =>
-      head ! Request.Proxy(req,next)
+  override def !(req: Request) = this match {
+    case PipeCons(_,PipeEnd) => req >> head
+    case PipeCons(annotate.Impl(f),tail) => req.withAnnotations(f) >> tail
+    case PipeCons(handle.Impl(f),tail) => f(req) >> tail
+    case PipeCons(_,next: PipeCons) => head ! Request.Proxy(req,next)
   }
 }
 

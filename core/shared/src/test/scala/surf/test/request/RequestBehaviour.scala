@@ -7,7 +7,7 @@
 package surf.test.request
 
 import surf.test.TestBase
-import surf.{CompletableFactory, Request}
+import surf.Request
 import utest._
 
 import scala.concurrent.{Promise, Future, ExecutionContext}

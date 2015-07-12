@@ -14,7 +14,6 @@ import scala.language.implicitConversions
 import akka.http.scaladsl.server
 import server.Directives._
 import surf.{ServiceRefFactory, CompleterFactory, Request}
-import surf.rest.{GET, RESTRequest, RESTResource}
 
 /**
  * Factory for akka-http routes to handle requests to [[RESTResource]]S
@@ -56,7 +55,6 @@ object RESTRouter {
   }
 
   implicit def handleRequest(req: Request)(implicit ec: ExecutionContext) : server.Route = {
-    import surf.rest.RESTResponse._
     import RESTResponseMarshaller._
 
     onSuccess(req.future) {

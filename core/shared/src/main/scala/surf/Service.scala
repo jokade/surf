@@ -7,6 +7,7 @@
 package surf
 
 import surf.Request.NullRequest
+import surf.Service.MessageProcessor
 
 /**
  * Base class for SuRF ServiceS.
@@ -47,3 +48,27 @@ abstract class Service extends MessageProcessor {
 }
 
 
+object Service {
+  type Processor = PartialFunction[Any,Unit]
+
+  /**
+   * Base trait for all objects that can process [[Request]]S
+   */
+  trait MessageProcessor {
+
+    /**
+     * Returns the Request currently in processing (if any).
+     */
+    def request : Request
+
+    /**
+     * Returns true iff the currently processed message is a Request
+     */
+    def isRequest : Boolean
+
+    /**
+     * Processes incoming flow requests
+     */
+    def process: Processor
+  }
+}

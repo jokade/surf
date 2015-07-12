@@ -16,7 +16,6 @@ import akka.http.scaladsl.{server, Http}
 import server.Directives._
 import akka.stream.{ActorFlowMaterializer, FlowMaterializer}
 import surf.{Request, CompleterFactory}
-import surf.rest.{RESTRequest, StaticRESTResource, RESTResource}
 
 import scala.concurrent.{ExecutionContext, Future}
 

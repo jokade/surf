@@ -7,7 +7,8 @@
 package surf.service
 
 import surf.Request.NullRequest
-import surf.{Service, MessageProcessor, Request, ServiceRef}
+import surf.Service.MessageProcessor
+import surf.{Request, ServiceRef}
 
 /**
  * Base class for static singleton services

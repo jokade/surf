@@ -1,11 +1,15 @@
-//     Project:
-//      Module:
-// Description:
+//     Project: surf (https://github.com/jokade/surf)
+//      Module: akka
+// Description: ServiceRef implamentation for akka actors
+
+// Copyright (c) 2015 Johannes Kastner <jokade@karchedon.de>
+//               Distributed under the MIT license (see included LICENSE file)
 package surf.akka
 
-import scala.language.implicitConversions
-import akka.actor.{ActorRefFactory, Props, ActorSelection, ActorRef}
+import akka.actor.{ActorRef, ActorRefFactory, ActorSelection, Props}
 import surf.{Request, ServiceRef}
+
+import scala.language.implicitConversions
 
 trait ServiceActorRef extends ServiceRef
 

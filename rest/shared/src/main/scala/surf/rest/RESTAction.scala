@@ -1,5 +1,5 @@
 // -   Project: surf (https://github.com/jokade/surf)
-//      Module: shared
+//      Module: rest / shared
 // Description: Defines the standard HTTP REST request methods GET, PUT, POST and DELETE
 //
 // Copyright (c) 2015 Johannes Kastner <jokade@karchedon.de>
