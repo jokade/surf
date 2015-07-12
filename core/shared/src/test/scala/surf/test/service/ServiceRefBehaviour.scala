@@ -18,8 +18,8 @@ trait ServiceRefBehaviour extends TestBase {
   def createEUT(props: ServiceProps) : ServiceRef
 
   val tests = TestSuite {
-    val unhandled = Promise[Any]()
-    val eut = createEUT(ServiceProps(new TestService(unhandled)))
+    val exception = Promise[Any]()
+    val eut = createEUT(ServiceProps(new TestService(exception)))
 
     'message-{
       'success-{
@@ -30,7 +30,7 @@ trait ServiceRefBehaviour extends TestBase {
 
       'unhandled-{
         eut ! "unhandled"
-        unhandled.future
+        exception.future
       }
     }
 
@@ -38,11 +38,19 @@ trait ServiceRefBehaviour extends TestBase {
       'success-{
         val req = Request(41)
         eut ! req
-        req.future.map{ case m => assert(m==42) }
+        req.future.map{
+          case m => assert( m==42, req.isCompleted )
+        }
       }
 
       'unhandled-{
         val req = Request("unhandled")
+        eut ! req
+        expectFailure(req.future)
+      }
+
+      'exception-{
+        val req = Request("exception")
         eut ! req
         expectFailure(req.future)
       }
@@ -62,6 +70,7 @@ trait ServiceRefBehaviour extends TestBase {
       case cmd : Cmd =>
         if(isRequest) cmd.fail() else cmd.complete()
       case i: Int if isRequest => request ! i+1
+      case "exception" => throw new RuntimeException("exception")
     }
   }
 }

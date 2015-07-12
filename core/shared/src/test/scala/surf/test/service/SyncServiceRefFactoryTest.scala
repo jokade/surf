@@ -6,8 +6,7 @@
 //               Distributed under the MIT license (see included LICENSE file)
 package surf.test.service
 
-import surf.{ServiceRefFactory, CompletableFactory, ServiceRef, ServiceProps}
-import utest._
+import surf.{CompletableFactory, ServiceProps, ServiceRef, ServiceRefFactory}
 
 object SyncServiceRefFactoryTest extends ServiceRefBehaviour {
   override implicit val cf: CompletableFactory = surf.Implicits.globalCF

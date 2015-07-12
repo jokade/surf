@@ -6,6 +6,8 @@
 //               Distributed under the MIT License (see included file LICENSE)
 package surf
 
+import surf.ServiceRefRegistry.ServiceRefRegistryException
+
 /**
  * Interface implemented by registries that provide access to [[ServiceRef]]S via a path.
  */
@@ -30,22 +32,38 @@ trait ServiceRefRegistry {
   def registerServices(services: (String,ServiceProps)*) : Unit
 
   /**
+   * Returns all paths for which a service is registered.
+   */
+  def registeredPaths: Iterable[String]
+
+  /**
    * Broadcasts the specified message to all registered services
    *
    * @param msg
    */
-  def broadcast(msg: Any) : Unit
+  //def broadcast(msg: Any) : Unit
 }
 
-class ServiceRefRegistryException(msg: String) extends RuntimeException(msg)
 
 object ServiceRefRegistry {
   def singletonRegistry(factory: ServiceRefFactory, services: (String,ServiceProps)*) : ServiceRefRegistry =
     singletonRegistry(factory, services.toMap)
 
+  /**
+   * Creates a ServiceRefRegistry that caches a single instance for each registered Service.
+   *
+   * @param factory
+   * @param services
+   */
   def singletonRegistry(factory: ServiceRefFactory, services: Map[String,ServiceProps]) : ServiceRefRegistry =
     new CachingServiceRefRegistry(factory,services)
 
+  /**
+   * A ServiceRefRegistry that caches a single ServiceRef instance for each registered Service.
+   *
+   * @param factory Factory used to create new ServiceRef instances
+   * @param initialServices initial set of registered services
+   */
   class CachingServiceRefRegistry(factory: ServiceRefFactory, initialServices: Map[String,ServiceProps]) extends ServiceRefRegistry {
     private var _services = initialServices
     private var _cache = Map.empty[String,ServiceRef]
@@ -60,7 +78,9 @@ object ServiceRefRegistry {
       _services ++= services
     }
 
-    override def broadcast(msg: Any) : Unit = _cache.values.foreach( _.!(msg:Any) )
+    override def registeredPaths =  _services.keys
+
+    //override def broadcast(msg: Any) : Unit = _cache.values.foreach( _.!(msg:Any) )
 
     private def createServiceRef(path: String) : ServiceRef = this.synchronized {
       if(_cache.contains(path)) _cache(path)
@@ -72,4 +92,6 @@ object ServiceRefRegistry {
       }
     }
   }
+
+  class ServiceRefRegistryException(msg: String) extends RuntimeException(msg)
 }
