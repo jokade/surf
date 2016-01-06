@@ -6,7 +6,8 @@
 //               Distributed under the MIT License (see included file LICENSE)
 package surf.rest
 
-import surf.{ServiceRefFactory, ServiceRef}
+import surf.{ServiceProps, ServiceRefFactory, ServiceRef}
+import surf.rest.RESTAction._
 
 /**
  * Describes a REST resource.
@@ -23,18 +24,20 @@ trait RESTResource {
   def name: String
 
   /**
-   * Returns the specified child resource, or None if the resource does not exist.
+   * Returns a resource that can handle the specified path, or None if no such resource exists.
+   * The second argument of the returned tuple contains the remaining path that should be
+   * passed in the [[RESTRequest]] when calling [[handle()]]
    *
-   * @param path List with relative path segments to the requested resource
+   * @param path relative path segments to the requested resource
    */
-  def child(path: List[String]): Option[RESTResource]
+  def child(path: Path): Option[(RESTResource,Path)]
 
   /**
-   * Returns the service to be used for handling requests to this resource.
+   * Handles the specified request.
    *
-   * @param factory ServiceRefFactory for creating the ServiceRef, if necessary
+   * @param request REST request to be handled
    */
-  def handler(implicit factory: ServiceRefFactory): ServiceRef
+  def handle(request: RESTRequest): Unit
 
 
   def canEqual(other: Any) = other.isInstanceOf[RESTResource]
@@ -56,22 +59,35 @@ object RESTResource {
 
   def isValidResourceName(name: String) : Boolean = name != null && validNames.matcher(name).matches()
 
-}
+  def apply(name: String, children: RESTResource*) : RESTResource = new Static(
+    name,
+    children.map{ c =>
+      assert(isValidResourceName(c.name), s"Invalid name for RESTResource: ${c.name}")
+      (c.name,c)
+    }.toMap)
 
-object RESTPath {
+  def apply(name: String, service: =>RESTService)(implicit f: ServiceRefFactory) : RESTResource =
+    new RESTServiceResource(name,f.serviceOf(ServiceProps(service)))
 
-  object IntNumber {
-    def unapply(s: String) : Option[Int] = try{
-      Some(s.toInt)
-    }
-    catch {
-      case _:Throwable => None
+  class Static(val name: String, children: Map[String,RESTResource]) extends RESTResource {
+    assert( isValidResourceName(name), s"Invalid name for RESTResource: $name" )
+
+    override def handle(request: RESTRequest): Unit = request.input match {
+      case GET(_,_) => request ! RESTResponse.NoContent
+      case _ => request ! RESTResponse.MethodNotAllowed
     }
 
-    def unapply(s: List[String]) : Option[Int] = s match {
-      case p :: Nil => unapply(p)
-      case _ => None
-    }
+    override def child(path: Path): Option[(RESTResource,Path)] =
+      if(path.isEmpty) Some((this,Nil))
+      else children.get(path.head).flatMap(_.child(path.tail))
   }
 
+
+  class RESTServiceResource(val name: String, service: ServiceRef) extends RESTResource {
+
+    final override def child(path: Path): Option[(RESTResource, Path)] = Some((this,path))
+
+    final override def handle(request: RESTRequest): Unit = service ! request
+  }
 }
+

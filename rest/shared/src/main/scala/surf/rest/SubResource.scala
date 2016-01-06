@@ -11,10 +11,14 @@
 package surf.rest
 
 import surf.{ServiceRef, ServiceRefFactory}
+import RESTResource._
 
-case class SubResource(name: String, data: Option[Any] = None)(parent: RESTResource) extends RESTResource {
+/*
+case class SubResource(path: Path)(parent: RESTResource) extends RESTResource {
+  override def name = path.last
 
   override def handler(implicit factory: ServiceRefFactory): ServiceRef = parent.handler
 
-  override def child(path: List[String]): Option[RESTResource] = None
+  override def child(path: Path): Option[RESTResource] = None
 }
+*/

@@ -11,7 +11,7 @@ lazy val commonSettings = Seq(
 )
 
 lazy val root = project.in(file(".")).
-  aggregate(coreJVM, coreJS, restJVM, restJS, akka, rest_servlet).
+  aggregate(coreJVM, coreJS, restJVM, restJS, akka).
   settings(commonSettings:_*).
   settings(
     name := "surf",
@@ -37,7 +37,7 @@ lazy val coreJS = core.js
 
 
 lazy val rest = crossProject.
-  dependsOn(core).
+  dependsOn(core % "compile->compile;test->test").
   settings(commonSettings:_*).
   settings(publishingSettings:_*).
   settings(

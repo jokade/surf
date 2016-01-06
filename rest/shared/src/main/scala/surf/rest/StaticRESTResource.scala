@@ -8,7 +8,7 @@ package surf.rest
 
 import surf.rest.RESTResponse.OK
 import surf.{ServiceProps, ServiceRef, ServiceRefFactory}
-
+/*
 class StaticRESTResource private(override val name: String,
                          val staticChildren: Map[String,RESTResource],
                          service: ServiceRef,
@@ -80,3 +80,4 @@ object StaticRESTResource {
     def props(resource: StaticRESTResource) : ServiceProps = ServiceProps(new StaticRESTResourceHandler(resource))
   }
 }
+*/

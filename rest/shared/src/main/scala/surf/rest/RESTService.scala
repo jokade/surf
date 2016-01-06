@@ -13,23 +13,15 @@ import surf.Service
  */
 abstract class RESTService extends Service {
 
-  def handleGET(resource: RESTResource, params: Map[String,Array[String]]) : Unit = request ! RESTResponse.MethodNotAllowed
+  def handle: PartialFunction[RESTAction,Unit]
 
-  def handlePUT(resource: RESTResource, params: Map[String,Array[String]], body: String) : Unit = request ! RESTResponse.MethodNotAllowed
+  def otherMessage(msg: Any): Unit =
+    if(isRequest) ???
+    else {}
 
-  def handlePOST(resource: RESTResource, params: Map[String,Array[String]], body: String) : Unit = request ! RESTResponse.MethodNotAllowed
-
-  def handleDELETE(resource: RESTResource, params: Map[String,Array[String]]) : Unit = request ! RESTResponse.MethodNotAllowed
-
-  def handleOther(message: Any) : Option[Any] = ???
-
-
-  override def process = {
-    case GET(res,params)       if isRequest => handleGET(res,params)
-    case PUT(res,params,body)  if isRequest => handlePUT(res,params,body)
-    case POST(res,params,body) if isRequest => handlePOST(res,params,body)
-    case DELETE(res,params)    if isRequest => handleDELETE(res,params)
-    case msg                   if isRequest => handleOther(msg).foreach( request ! _ )
-    case msg                                => handleOther(msg)
+  final override def process = {
+    case r: RESTAction => handle(r)
+    case x => otherMessage(x)
   }
 }
+

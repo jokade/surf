@@ -153,13 +153,13 @@ trait Request {
 }
 
 object Request {
-  def apply(input: Any)(implicit ec: ExecutionContext) : Request = Impl(input, Promise[Any](),Map(),null)
+  def apply(input: Any)(implicit ec: ExecutionContext) : Request = new Impl(input, Promise[Any](),Map(),null)
 
   def apply(input: Any, target: Promise[Any], annotations: Map[String,Any] = Map(), mapResponse: (Any)=>Any = null)
-           (implicit ec: ExecutionContext): Request = Impl(input,target,annotations,mapResponse)
+           (implicit ec: ExecutionContext): Request = new Impl(input,target,annotations,mapResponse)
 
 
-  case class Impl(input: Any, target: Promise[Any], annotations: Map[String,Any], mapResponse: (Any) => Any)
+  class Impl[T](val input: T, val target: Promise[Any], val annotations: Map[String,Any], mapResponse: (Any) => Any)
                  (implicit ec: ExecutionContext) extends Request {
     @inline final override def withAnnotations(f: Map[String,Any]=>Map[String,Any]) = Request(input,target, f(annotations),mapResponse)
     @inline final override def isCompleted: Boolean = target.isCompleted

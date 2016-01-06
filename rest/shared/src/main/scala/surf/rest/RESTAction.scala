@@ -6,6 +6,8 @@
 //               Distributed under the MIT License (see included file LICENSE)
 package surf.rest
 
+import RESTAction._
+
 /**
  * A REST request message
  */
@@ -14,19 +16,27 @@ sealed trait RESTAction {
   /**
    * The resource on which this action is called.
    */
-  def resource: RESTResource
+  def path: Path
 
   /**
    * The URL query parameters sent with this request
    */
-  def params: Map[String,Any]
+  def params: Params
 
 }
 
-case class GET(resource: RESTResource, params: Map[String,Array[String]]) extends RESTAction
+object RESTAction {
+  type Path = Seq[String]
+  type Params = Map[String,Any]
+  type Body = String
 
-case class PUT(resource: RESTResource, params: Map[String,Array[String]], body: String) extends RESTAction
+  case class GET(path: Path, params: Params) extends RESTAction
 
-case class POST(resource: RESTResource, params: Map[String,Array[String]], body: String) extends RESTAction
+  case class PUT(path: Path, params: Params, body: Body) extends RESTAction
 
-case class DELETE(resource: RESTResource, params: Map[String,Array[String]]) extends RESTAction
+  case class POST(path: Path, params: Params, body: Body) extends RESTAction
+
+  case class DELETE(path: Path, params: Params) extends RESTAction
+}
+
+
