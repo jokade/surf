@@ -1,5 +1,5 @@
 // -   Project: surf (https://github.com/jokade/surf)
-//      Module: shared
+//      Module: core / shared
 // Description: Defines the interface and default implementations for ServiceRefFactoryS
 //
 // Copyright (c) 2015 Johannes Kastner <jokade@karchedon.de>
@@ -7,7 +7,7 @@
 // Description:
 package surf
 
-import surf.service.SyncServiceWrapper
+import surf.service.{AsyncServiceWrapper, SyncServiceWrapper}
 
 /**
  * A factory for creating [[ServiceRef]]S using [[ServiceProps]]s.
@@ -27,8 +27,14 @@ object ServiceRefFactory {
    */
   implicit lazy val Sync : ServiceRefFactory = new SyncServiceRefFactory
 
+  implicit lazy val Async : ServiceRefFactory = new AsyncServiceRefFactory
+
   class SyncServiceRefFactory extends ServiceRefFactory {
     override def serviceOf(props: ServiceProps) = new SyncServiceWrapper(props.createService())
+  }
+
+  class AsyncServiceRefFactory extends ServiceRefFactory {
+    override def serviceOf(props: ServiceProps): ServiceRef = new AsyncServiceWrapper(props.createService())
   }
 
 }

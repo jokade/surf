@@ -26,6 +26,8 @@ package object dsl {
    *
    * @param req request to wait for
    * @param atMost timeout (an exception is thrown, if the request is not completed within this duration)
+   *
+   * @note This method is not supported in JavaScript environments!
    */
   final def await(req: Request)(implicit atMost: Duration) : Any = Await.result(req.future,atMost)
 
@@ -36,6 +38,8 @@ package object dsl {
    * @param pf the request result is mapped using this function
    * @param atMost timeout (an exception is thrown, if the request is not completed within this duration)
    * @tparam T result type
+   *
+   * @note This method is not supported in JavaScript environments!
    */
   final def awaitMap[T](req: Request)(pf: PartialFunction[Any,T])(implicit atMost: Duration) : T =
     pf(Await.result(req.future,atMost))
@@ -105,7 +109,7 @@ package object dsl {
     protected[dsl] case class Impl(f: Request=>Request) extends ServiceRef {
       override def !(req: Request): Request = f(req)
       override def !(msg: Any): Unit =
-        throw new RuntimeException(s"Cannot annotate a command message (only Requests can be annotated)")
+        throw new RuntimeException(s"Cannot handle a command message (only Requests can be handled)")
     }
   }
 }
