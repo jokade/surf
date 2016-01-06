@@ -9,13 +9,13 @@ package surf.service
 import surf.Request.NullRequest
 import surf.{Service, Request, ServiceRef}
 
-class AsyncServiceWrapper(processor: Service) extends ServiceRef {
+final class AsyncServiceWrapper(processor: Service) extends ServiceRef {
   @inline
-  override def !(req: Request): Request = {
+  final override def !(req: Request): Request = {
     surf.plattform.invokeLater(()=>processor.handle(req,req.input))
     req
   }
 
   @inline
-  override def !(msg: Any): Unit = surf.plattform.invokeLater( ()=>processor.handle(NullRequest,msg) )
+  final override def !(msg: Any): Unit = surf.plattform.invokeLater( ()=>processor.handle(NullRequest,msg) )
 }

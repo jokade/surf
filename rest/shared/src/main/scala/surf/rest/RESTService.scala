@@ -19,6 +19,7 @@ abstract class RESTService extends Service {
     if(isRequest) ???
     else {}
 
+  @inline
   final override def process = {
     case r: RESTAction => handle(r)
     case x => otherMessage(x)

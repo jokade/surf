@@ -27,14 +27,19 @@ object ServiceRefFactory {
    */
   implicit lazy val Sync : ServiceRefFactory = new SyncServiceRefFactory
 
+  /**
+   * Creates ServiceRefS that process messages asynchronously using a single thread.
+   */
   implicit lazy val Async : ServiceRefFactory = new AsyncServiceRefFactory
 
-  class SyncServiceRefFactory extends ServiceRefFactory {
-    override def serviceOf(props: ServiceProps) = new SyncServiceWrapper(props.createService())
+  final class SyncServiceRefFactory extends ServiceRefFactory {
+    @inline
+    final override def serviceOf(props: ServiceProps) = new SyncServiceWrapper(props.createService())
   }
 
-  class AsyncServiceRefFactory extends ServiceRefFactory {
-    override def serviceOf(props: ServiceProps): ServiceRef = new AsyncServiceWrapper(props.createService())
+  final class AsyncServiceRefFactory extends ServiceRefFactory {
+    @inline
+    final override def serviceOf(props: ServiceProps): ServiceRef = new AsyncServiceWrapper(props.createService())
   }
 
 }

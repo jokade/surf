@@ -7,11 +7,12 @@ lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "com.lihaoyi" %%% "utest" % "0.3.1" % "test"
   ),
-  testFrameworks += new TestFramework("utest.runner.Framework")
+  testFrameworks += new TestFramework("utest.runner.Framework"),
+  resolvers += Resolver.sonatypeRepo("snapshots")
 )
 
 lazy val root = project.in(file(".")).
-  aggregate(coreJVM, coreJS, restJVM, restJS, akka).
+  aggregate(coreJVM, coreJS, restJVM, restJS, akka, rest_nodejs).
   settings(commonSettings:_*).
   settings(
     name := "surf",
@@ -43,7 +44,8 @@ lazy val rest = crossProject.
   settings(
     name := "surf-rest",
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %% "upickle" % "0.2.8"
+      "com.lihaoyi" %% "upickle" % "0.2.8",
+      "biz.enef"    %%% "slogging" % "0.3"
     )
   )
 
@@ -85,6 +87,17 @@ lazy val rest_akka = project.
     )
   )
 
+lazy val rest_nodejs = project.
+  enablePlugins(ScalaJSPlugin).
+  dependsOn( restJS ).
+  settings(commonSettings:_*).
+  settings(publishingSettings:_*).
+  settings(
+    name := "surf-rest-nodejs",
+    libraryDependencies ++= Seq(
+      "biz.enef" %%% "scalajs-nodejs" % "0.1-SNAPSHOT"
+    )
+  )
 
 lazy val publishingSettings = Seq(
   publishMavenStyle := true,
