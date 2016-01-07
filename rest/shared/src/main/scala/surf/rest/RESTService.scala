@@ -1,5 +1,5 @@
 // -   Project: surf (https://github.com/jokade/surf)
-//      Module: shared
+//      Module: rest / shared
 // Description: Base class for REST services
 //
 // Copyright (c) 2015 Johannes Kastner <jokade@karchedon.de>

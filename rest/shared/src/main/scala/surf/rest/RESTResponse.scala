@@ -17,11 +17,10 @@ sealed trait RESTResponse
  * RESTResponse types
  */
 object RESTResponse {
+
   trait ResponseWriter {
     def write(s: String) : Unit
   }
-
-  type ResponseGenerator = Either[(Writer)=>Unit,(OutputStream)=>Unit]
 
   /**
    * Response to a successful request (HTTP Code: 200)
@@ -30,9 +29,6 @@ object RESTResponse {
    */
   case class OK(writeResponse: (ResponseWriter)=>Unit, ctype: String) extends RESTResponse
   object OK {
-//    def apply(write: (Writer)=>Unit, ctype: String): OK = OK( Left(write), ctype )
-//    def binary(out: (OutputStream)=>Unit, ctype: String): OK = OK( Right(out), ctype )
-
     /**
      * @param data response data (written using its `toString` method)
      */

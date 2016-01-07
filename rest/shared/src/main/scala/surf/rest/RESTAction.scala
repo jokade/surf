@@ -23,20 +23,32 @@ sealed trait RESTAction {
    */
   def params: Params
 
+  /**
+   * Returns a copy of this action with an updated path.
+   */
+  def withPath(path: Path): RESTAction
 }
 
 object RESTAction {
-  type Path = Seq[String]
-  type Params = Map[String,Any]
-  type Body = String
 
-  case class GET(path: Path, params: Params) extends RESTAction
+  case class GET(path: Path, params: Params) extends RESTAction {
+    @inline
+    override def withPath(path: Path): GET = copy(path = path)
+  }
 
-  case class PUT(path: Path, params: Params, body: Body) extends RESTAction
+  case class PUT(path: Path, params: Params, body: Body) extends RESTAction {
+    @inline
+    override def withPath(path: Path): PUT = copy(path = path)
+  }
 
-  case class POST(path: Path, params: Params, body: Body) extends RESTAction
+  case class POST(path: Path, params: Params, body: Body) extends RESTAction {
+    @inline
+    override def withPath(path: Path): POST = copy(path = path)
+  }
 
-  case class DELETE(path: Path, params: Params) extends RESTAction
+  case class DELETE(path: Path, params: Params) extends RESTAction {
+    override def withPath(path: Path): DELETE = copy(path = path)
+  }
 }
 
 
