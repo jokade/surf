@@ -12,7 +12,7 @@ lazy val commonSettings = Seq(
 )
 
 lazy val root = project.in(file(".")).
-  aggregate(coreJVM, coreJS, restJVM, restJS, akka, rest_nodejs).
+  aggregate(coreJVM, coreJS, restJVM, restJS, akka, rest_servlet, rest_nodejs).
   settings(commonSettings:_*).
   settings(
     name := "surf",

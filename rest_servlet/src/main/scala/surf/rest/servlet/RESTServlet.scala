@@ -10,13 +10,12 @@ import java.util.function.BinaryOperator
 import javax.servlet.AsyncContext
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 
-import surf.rest.{RESTRequest, RESTResource}
 import surf.rest.RESTResponse._
-import surf.{Request, ServiceRefFactory}
+import surf.rest.{RESTAction, RESTResolver}
+import surf.{Annotations, Request}
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.{AbstractMap, DefaultMap}
-import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
 abstract class RESTServlet extends RESTServlet.Base {
@@ -64,68 +63,68 @@ abstract class RESTServlet extends RESTServlet.Base {
       error(http,async,500,"Unknown REST response of type "+x.getClass)
   }
 
-  override protected def handleRequest(req: HttpServletRequest, resp: HttpServletResponse)(f: RESTResource => Request) : Unit =
-    getResource(req) match {
-      case None =>
-        resp.setStatus(404)
-      case Some(r) => (annotations(req) match {
-        case None => f(r)
-        case Some(as) => f(r).withAnnotations( _ => as )
-      }) >> r.handler onComplete handleResponse(resp,req.startAsync())
-    }
+//    getResource(req) match {
+//      case None =>
+//        resp.setStatus(404)
+//      case Some(r) => (annotations(req) match {
+//        case None => f(r)
+//        case Some(as) => f(r).withAnnotations( _ => as )
+//      }) >> r.handler onComplete handleResponse(resp,req.startAsync())
+//    }
+  override def handleRequest(action: RESTAction, req: HttpServletRequest, resp: HttpServletResponse): Unit = ???
 }
 
 object RESTServlet {
   abstract class Base extends HttpServlet {
-    import RESTRequest._
+    import surf.rest.{Params, Path}
 
-    implicit def executionContext: ExecutionContext
-
-    /**
-     * Factory used to create ServiceRefS
-     */
-    implicit def handlerRef: ServiceRefFactory
 
     /**
-     * The root of the resource tree handled by this servlet
+     * The resolver used to find a handler service for each request
      */
-    def root: RESTResource
+    def resolver: RESTResolver
 
     /**
      * Returns a Map of annotations to be added to the [[Request]], or None.
      *
      * @param req
      */
-    def annotations(req: HttpServletRequest) : Option[Map[String,Any]] = None
+    def annotations(req: HttpServletRequest) : Annotations = Map()
 
     /**
      * Returns a map with all parameters set on the specified request.
      */
-    final def params(req: HttpServletRequest) : Map[String,Array[String]] = new ParamsMap(req.getParameterMap)
+    final def params(req: HttpServletRequest) : Params = new ParamsMap(req.getParameterMap)
 
-
-    final override def doGet(req: HttpServletRequest, resp: HttpServletResponse): Unit =
-      handleRequest(req,resp)(GETRequest(_,params(req)))
-
-    final override def doPut(req: HttpServletRequest, resp: HttpServletResponse): Unit =
-      handleRequest(req,resp)(PUTRequest(_,params(req),body(req)))
-
-    final override def doPost(req: HttpServletRequest, resp: HttpServletResponse): Unit =
-      handleRequest(req,resp)(POSTRequest(_,params(req),body(req)))
-
-    protected def getResource(req: HttpServletRequest) = req.getPathInfo match {
-      case null | "/" => Some(root)
-      case path => root.child(path.split("/").toList.tail)
+    @inline
+    final def path(req: HttpServletRequest) : Path = req.getPathInfo match {
+      case null | "/" => Seq()
+      case path => path.split("/")
     }
 
-    protected def handleRequest(req: HttpServletRequest, resp: HttpServletResponse)(f: RESTResource => Request) : Unit
-
-    private def body(req: HttpServletRequest) : String = {
+    @inline
+    final def body(req: HttpServletRequest) : String = {
       val len = req.getContentLength
       req.getReader.lines().reduce(new BinaryOperator[String] {
         override def apply(t: String, u: String): String = t ++ u
       }).orElse("")
     }
+
+    final override def doGet(req: HttpServletRequest, resp: HttpServletResponse): Unit =
+      handleRequest(RESTAction.GET(path(req),params(req)),req,resp)
+
+    final override def doPut(req: HttpServletRequest, resp: HttpServletResponse): Unit =
+      handleRequest(RESTAction.PUT(path(req),params(req),body(req)),req,resp)
+
+    final override def doPost(req: HttpServletRequest, resp: HttpServletResponse): Unit =
+      handleRequest(RESTAction.POST(path(req),params(req),body(req)),req,resp)
+
+    final override def doDelete(req: HttpServletRequest, resp: HttpServletResponse): Unit =
+      handleRequest(RESTAction.DELETE(path(req),params(req)),req,resp)
+
+    def handleRequest(action: RESTAction, req: HttpServletRequest, resp: HttpServletResponse) : Unit
+
+
 
     // TODO: more efficient solution?
     private class ParamsMap(m: java.util.Map[String,Array[String]])
@@ -134,5 +133,12 @@ object RESTServlet {
 
       override def iterator: Iterator[(String, Array[String])] = m.asScala.toIterator
     }
+  }
+
+  class HttpServletResponseWriter(resp: HttpServletResponse) extends ResponseWriter {
+    override def write(s: String): Unit = ???
+  }
+  object HttpServletResponseWriter {
+    def apply(resp: HttpServletResponse): ResponseWriter = new HttpServletResponseWriter(resp)
   }
 }

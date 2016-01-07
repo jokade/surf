@@ -1,6 +1,6 @@
 // -   Project: surf (https://github.com/jokade/surf)
 //      Module: rest-servlet
-// Description: HttpServlet that handles all request synchronously via a surf RESTService
+// Description: HttpServlet that handles all request synchronously (blocking) on the calling thread.
 //
 // Copyright (c) 2015 Johannes Kastner <jokade@karchedon.de>
 //               Distributed under the MIT License (see included file LICENSE)
@@ -8,38 +8,34 @@ package surf.rest.servlet
 
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
-import surf.Request
-import surf.rest.RESTResource
 import surf.rest.RESTResponse._
+import surf.rest.servlet.RESTServlet.HttpServletResponseWriter
+import surf.rest.{RESTRequest, RESTAction, RESTResolver}
 
-import scala.Error
-import scala.concurrent.Await
+import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success}
 
-abstract class SyncRESTServlet extends RESTServlet.Base {
-  private val timeout = Duration(5,"seconds")
+class SyncRESTServlet(val resolver: RESTResolver, timeout: Duration)
+                     (implicit ec: ExecutionContext) extends RESTServlet.Base {
 
 
-  override protected def handleRequest(req: HttpServletRequest, resp: HttpServletResponse)(f: (RESTResource) => Request): Unit =
-    getResource(req) match {
+  override def handleRequest(action: RESTAction, req: HttpServletRequest, resp: HttpServletResponse): Unit =
+    resolver.resolveRESTService(action) match {
       case None =>
         resp.setStatus(404)
-      case Some(r) =>
-        val flow = (annotations(req) match {
-          case None => f(r)
-          case Some(as) => f(r).withAnnotations( _ => as )
-        }) >> r.handler
-        val result = Await.result(flow.future, timeout)
-        handleResponse(resp)(result)
-  }
+      case Some((service,act)) =>
+        val result = Await.result( (RESTRequest(act,annotations(req)) >> service).future, timeout )
+        handleResult(result,resp)
+    }
 
   // TODO: do we need to return a PartialFunction here?
-  private def handleResponse(resp: HttpServletResponse) : PartialFunction[Any,Any] = {
-    case OK(rg,ctype) =>
+  @annotation.tailrec
+  private def handleResult(result: Any, resp: HttpServletResponse) : Unit = result match {
+    case OK(writeData,ctype) =>
       resp.setStatus(200)
       resp.setContentType(ctype)
-      writeData(rg,resp)
+      writeData(HttpServletResponseWriter(resp))
     case NoContent =>
       resp.setStatus(204)
     case BadRequest(msg) =>
@@ -55,16 +51,11 @@ abstract class SyncRESTServlet extends RESTServlet.Base {
     case Failure(ex) =>
       error(resp,500,ex.toString)
     case Success(x) =>
-      handleResponse(resp).apply(x)
+      handleResult(x,resp)
     case x =>
       error(resp,500,"Unknonw REST response of type "+x.getClass)
   }
 
-  // TODO: use streams (and possible callbacks?)
-  private def writeData(rg: ResponseGenerator, resp: HttpServletResponse) : Unit = rg match {
-    case Left(write) => write(resp.getWriter)
-    case Right(out) => out(resp.getOutputStream)
-  }
 
   private def error(resp: HttpServletResponse, status: Int, msg: String): Unit = {
     resp.sendError(status,msg)

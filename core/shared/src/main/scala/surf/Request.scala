@@ -23,14 +23,14 @@ trait Request {
   /**
    * Map with all annotations defined on the current request.
    */
-  def annotations: Map[String,Any]
+  def annotations: Annotations
 
   /**
    * Creates an updated request with additional annotations.
    *
    * @param f Receives the annotations defined on the current request and returns the updated map of annotations.
    */
-  def withAnnotations(f: Map[String,Any]=>Map[String,Any]) : Request
+  def withAnnotations(f: Annotations => Annotations) : Request
 
   /**
    * Completes the current request successfully with the specified response.
@@ -155,13 +155,13 @@ trait Request {
 object Request {
   def apply(input: Any)(implicit ec: ExecutionContext) : Request = new Impl(input, Promise[Any](),Map(),null)
 
-  def apply(input: Any, target: Promise[Any], annotations: Map[String,Any] = Map(), mapResponse: (Any)=>Any = null)
+  def apply(input: Any, target: Promise[Any], annotations: Annotations = Map(), mapResponse: (Any)=>Any = null)
            (implicit ec: ExecutionContext): Request = new Impl(input,target,annotations,mapResponse)
 
 
-  class Impl[T](val input: T, val target: Promise[Any], val annotations: Map[String,Any], mapResponse: (Any) => Any)
+  class Impl[T](val input: T, val target: Promise[Any], val annotations: Annotations, mapResponse: (Any) => Any)
                  (implicit ec: ExecutionContext) extends Request {
-    @inline final override def withAnnotations(f: Map[String,Any]=>Map[String,Any]) = Request(input,target, f(annotations),mapResponse)
+    @inline final override def withAnnotations(f: Annotations=>Annotations) = Request(input,target, f(annotations),mapResponse)
     @inline final override def isCompleted: Boolean = target.isCompleted
     final lazy val future: Future[Any] =
       if(mapResponse==null) target.future
@@ -178,7 +178,7 @@ object Request {
   object NullRequest extends Request {
     @inline override final def input: Any = None
     @inline override final def annotations = Map.empty[String,Any]
-    @inline override final def withAnnotations(f: Map[String,Any]=>Map[String,Any]) = throw new RuntimeException("Cannot annotate NullRequest")
+    @inline override final def withAnnotations(f: Annotations=>Annotations) = throw new RuntimeException("Cannot annotate NullRequest")
     @inline override final def map(fInput: (Any) => Any)(fOutput: (Any)=>Any): Request = throw new RuntimeException("Cannot map NullRequest")
     @inline override final def isCompleted: Boolean = false
     @inline override final def future: Future[Any] = throw new RuntimeException(s"No future for NullRequest")
@@ -190,8 +190,8 @@ object Request {
 
   case class Proxy(req: Request, next: ServiceRef) extends Request {
     @inline override final def input: Any = req.input
-    @inline override final def withAnnotations(f: (Map[String, Any]) => Map[String, Any]): Request = Proxy(req.withAnnotations(f),next)
-    @inline override final def annotations: Map[String, Any] = req.annotations
+    @inline override final def withAnnotations(f: Annotations => Annotations): Request = Proxy(req.withAnnotations(f),next)
+    @inline override final def annotations: Annotations  = req.annotations
     @inline override final def onComplete(f: PartialFunction[Try[Any], Any]): Request = req.onComplete(f)
     @inline override final def onFailure(f: PartialFunction[Throwable, Any]): Request = req.onFailure(f)
     @inline override final def onSuccess(f: PartialFunction[Any, Any]): Request = req.onSuccess(f)
