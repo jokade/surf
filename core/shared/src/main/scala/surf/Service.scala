@@ -33,7 +33,7 @@ abstract class Service extends MessageProcessor {
 
   final override def request : Request = _req
   final override def isRequest : Boolean = _req != NullRequest
-  final def handle(req: Request, data: Any): Unit = {
+  protected[surf] def handle(req: Request, data: Any): Unit = {
     _req = req
     try {
       process.apply(data)
