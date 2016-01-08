@@ -34,10 +34,11 @@ trait DSLBehaviour extends TestBase {
     val add1Service = serviceRef(new IncService)
 
     'implicitAnyToRequest-{
-      val req = (1 >> incService) mapOutput{
+      val req = Request(1)
+      req.mapOutput{
         case 2 => true
         case _ => false
-      }
+      } >> incService
       req.future.map{ case m => assert(m==true) }
     }
 
@@ -46,20 +47,21 @@ trait DSLBehaviour extends TestBase {
       val add3Service = incService :: add1Service :: incService
       add3Service ! 2
 
-      val req = 1 >> add3Service mapOutput{
+      val req = Request(1).mapOutput{
         case 6 => true
         case _ => false
-      }
+      } >> add3Service
       req.future.map{ case m => assert(m==true) }
     }
 
 
     'transform-{
-      val req = "41" >> stringToInt :: incService :: transform{
-        case x => x.toString
-      } :: stringToInt mapOutput{
+      val req = Request("41")
+      req.mapOutput {
         case 42 => true
-      }
+      } >> stringToInt :: incService :: transform{
+          case x => x.toString
+        } :: stringToInt
       req.future.map{ case m => assert(m==true) }
     }
 
@@ -74,14 +76,16 @@ trait DSLBehaviour extends TestBase {
       val req3 = req2 >> annotate( _.updated("test",false) )
       assert( req3.annotations("test") == false, req3.annotations("int") == 42 )
 
-      val req4 = "msg" >> annotate("int"->41) :: add1Service mapOutput{
+      val req4 = Request("msg")
+      req4.mapOutput {
         case 42 => true
-      }
+      } >> annotate("int"->41) :: add1Service
       val f1 = req4.future.map{ case m => assert(m==true) }
 
-      val req5 = "1" >> stringToInt :: annotate("int"->42) :: add1Service mapOutput{
+      val req5 = Request("1")
+      req5.mapOutput {
         case 43 => true
-      }
+      } >> stringToInt :: annotate("int"->42) :: add1Service
       val f2 = req5.future.map{ case m => assert(m==true) }
 
       merge(f1,f2)
@@ -91,11 +95,12 @@ trait DSLBehaviour extends TestBase {
       val req1 = "msg" >> handle{ req => req.withAnnotations(_ => Map("int"->42)) }
       assert( req1.input == "msg", req1.annotations("int") == 42 )
 
-      val req2 = "msg" >> handle( _.mapInput {
-        case "msg" => 1
-      }) :: add1Service mapOutput{
+      val req2 = Request("msg")
+      req2.mapOutput {
         case 2 => true
-      }
+      } >> handle( _.mapInput {
+        case "msg" => 1
+      }) :: add1Service
 
       req2.future.map{ case m => assert( m == true ) }
     }

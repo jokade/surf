@@ -66,7 +66,7 @@ trait Request {
   def withInput(input: Any) : Request = mapInput( _ => input)
 
   /**
-   * Creates an updated request from the current one, where the response will be transformed by sepcified function.
+   * Creates an updated request from the current one, where the response will be transformed by the specified function.
    *
    * @param f function used to transform the response message
    *
@@ -84,6 +84,11 @@ trait Request {
   /**
    * Returns a new request with the same completion target as the current request,
    * but the original input is transformed by `fIn`, and the response is transformed by `fOut`.
+   *
+   * @note The response message is transformed __before__ it is used to complete the request;
+   *       hence, all response listeners registered to the underlying Completable will receive the
+   *       transformed response, even those that were registered on another request in the current
+   *       request chain.
    *
    * @param fIn function to transform the input message with
    * @param fOut function to transform the response with
@@ -163,10 +168,10 @@ object Request {
                  (implicit ec: ExecutionContext) extends Request {
     @inline final override def withAnnotations(f: Annotations=>Annotations) = Request(input,target, f(annotations),mapResponse)
     @inline final override def isCompleted: Boolean = target.isCompleted
-    final lazy val future: Future[Any] =
-      if(mapResponse==null) target.future
-      else target.future.map(mapResponse)
-    @inline final override def complete(resp: Response): Unit = target.complete(resp)
+    final lazy val future: Future[Any] = target.future
+    @inline final override def complete(resp: Response): Unit =
+      if(mapResponse==null) target.complete(resp)
+      else target.complete(resp.map(mapResponse))
     @inline final override def mapInput(fInput: (Any)=>Any) = Request(fInput(input),target,annotations,mapResponse)
     @inline final override def map(fInput: (Any) => Any)(fOutput: (Any)=>Any) = Request(fInput(input),target,annotations,
       if(mapResponse==null) fOutput else mapResponse andThen fOutput)

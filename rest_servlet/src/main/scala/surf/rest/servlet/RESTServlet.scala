@@ -133,7 +133,7 @@ object RESTServlet {
   }
 
   class HttpServletResponseWriter(resp: HttpServletResponse) extends ResponseWriter {
-    override def write(s: String): Unit = ???
+    override def write(s: String): Unit = resp.getWriter.write(s)
   }
   object HttpServletResponseWriter {
     def apply(resp: HttpServletResponse): ResponseWriter = new HttpServletResponseWriter(resp)
