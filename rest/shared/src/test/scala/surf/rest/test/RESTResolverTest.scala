@@ -27,14 +27,14 @@ object RESTResolverWrapperTest extends TestBase {
         assert(
           eut.resolveRESTService(getFooBar) == Some((dummyService,getFooBar)),
           eut.called,
-          eut.subresolvers(0).called
+          eut.resolvers(0).called
         )
       }
       'b-{
         assert(
           eut.resolveRESTService(getFooBarSub) == None,
           eut.called,
-          eut.subresolvers(0).called
+          eut.resolvers(0).called
         )
       }
     }
@@ -44,31 +44,31 @@ object RESTResolverWrapperTest extends TestBase {
       'a-{
         assert( eut.resolveRESTService(getFooBar) == Some((dummyService,getFooBar)),
           eut.called,
-          eut.subresolvers(0).called,
-          !eut.subresolvers(1).called,
-          !eut.subresolvers(2).called
+          eut.resolvers(0).called,
+          !eut.resolvers(1).called,
+          !eut.resolvers(2).called
         )
       }
       'b-{
         assert( eut.resolveRESTService(getFooBarSub) == Some((dummyService,getFooBarSub)),
           eut.called,
-          eut.subresolvers(0).called,
-          eut.subresolvers(1).called,
-          !eut.subresolvers(2).called
+          eut.resolvers(0).called,
+          eut.resolvers(1).called,
+          !eut.resolvers(2).called
         )
       }
       'b-{
         assert( eut.resolveRESTService(getHelloWorld) == None,
           eut.called,
-          eut.subresolvers(0).called,
-          eut.subresolvers(1).called,
-          eut.subresolvers(2).called
+          eut.resolvers(0).called,
+          eut.resolvers(1).called,
+          eut.resolvers(2).called
         )
       }
     }
   }
 
-  class WrapperDummy(val subresolvers: Seq[LoggingResolver]) extends RESTResolver.Wrapper with LoggingResolver {
+  class WrapperDummy(val resolvers: Seq[LoggingResolver]) extends RESTResolver.WrapperResolver(resolvers) with LoggingResolver {
     override def resolveRESTService(action: RESTAction): Option[(ServiceRef, RESTAction)] = {
       called = true
       super.resolveRESTService(action)
@@ -78,12 +78,12 @@ object RESTResolverWrapperTest extends TestBase {
 
 
 object PrefixResolverTest extends TestBase {
-  import RESTResolver.PrefixResolver
+  import RESTResolver.PrefixWrapperResolver
   import SimpleRESTResolver._
 
   override val tests = TestSuite {
     'empty-{
-      val eut = new PrefixResolver(Map())
+      val eut = new PrefixWrapperResolver(Map())
       assert( eut.resolveRESTService(getFooBar) == None )
     }
     'prefix-{
@@ -91,7 +91,7 @@ object PrefixResolverTest extends TestBase {
         Seq("foo") -> SimpleRESTResolver(getBar,dummyService),
         Seq("hello") -> SimpleRESTResolver(getWorld,dummyService)
       )
-      val eut = new PrefixResolver(map)
+      val eut = new PrefixWrapperResolver(map)
       'A-{
         assert(
           eut.resolveRESTService(getFooBar) == Some((dummyService,getBar)),

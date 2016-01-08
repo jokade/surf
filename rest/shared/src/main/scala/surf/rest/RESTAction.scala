@@ -49,6 +49,10 @@ object RESTAction {
   case class DELETE(path: Path, params: Params) extends RESTAction {
     override def withPath(path: Path): DELETE = copy(path = path)
   }
+
+  def matchPrefix[T>:RESTAction](prefix: Path, action: RESTAction): Option[T] =
+    Path.matchPrefix(prefix,action.path).map( action.withPath(_) )
+
 }
 
 

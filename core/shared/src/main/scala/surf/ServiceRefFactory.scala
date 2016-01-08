@@ -10,12 +10,14 @@ package surf
 import surf.service.{AsyncServiceWrapper, SyncServiceWrapper}
 
 /**
- * A factory for creating [[ServiceRef]]S using [[ServiceProps]]s.
+ * A factory for creating [[ServiceRef]]S.
  */
 trait ServiceRefFactory {
 
   def serviceOf(props: ServiceProps) : ServiceRef
 
+  @inline
+  final def serviceOf(createService: =>Service) : ServiceRef = serviceOf(ServiceProps(createService))
 }
 
 object ServiceRefFactory {

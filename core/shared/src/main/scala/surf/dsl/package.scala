@@ -55,10 +55,23 @@ package object dsl {
   }
 
   /**
-   * Converts a ServiceRef into a PipelineService
+   * Converters for ServiceRefs
    */
   implicit class ServiceDSL(val service: ServiceRef) extends AnyVal {
+    /**
+     * Converts a ServiceRef into a ServicePipe
+     */
     def ::(left: ServiceRef) : ServicePipe = left :: service :: PipeEnd
+  }
+
+  /**
+   * Converters for Iterables of ServiceRefS
+   */
+  implicit class ServiceIterableDSL(val iterable: Iterable[ServiceRef]) extends AnyVal {
+    /**
+     * Converts an Iterable of ServiceRefs into a ServicePipe.
+     */
+    def toServicePipe: ServicePipe = iterable.foldLeft(PipeEnd:ServicePipe)( (tail,ref) => ref :: tail )
   }
 
   object transform {

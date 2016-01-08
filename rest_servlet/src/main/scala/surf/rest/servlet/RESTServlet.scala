@@ -97,10 +97,7 @@ object RESTServlet {
     final def params(req: HttpServletRequest) : Params = new ParamsMap(req.getParameterMap)
 
     @inline
-    final def path(req: HttpServletRequest) : Path = req.getPathInfo match {
-      case null | "/" => Seq()
-      case path => path.split("/")
-    }
+    final def path(req: HttpServletRequest) : Path = Path(req.getPathInfo)
 
     @inline
     final def body(req: HttpServletRequest) : String = {
