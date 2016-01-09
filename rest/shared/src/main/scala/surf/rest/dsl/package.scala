@@ -6,7 +6,9 @@
 //               Distributed under the MIT license (see included LICENSE file)
 package surf.rest
 
+import surf.Request
 import surf.rest.RESTAction.{DELETE, PUT, POST, GET}
+import surf.rest.RESTResponse._
 
 /**
  * Directives for the surf REST DSL.
@@ -17,13 +19,13 @@ package object dsl {
     def ~(next: RESTHandler) : RESTHandler = handler orElse next
   }
 
-  def prefix(path: Path)(handle: RESTHandler)(implicit nfh: NotFoundHandler) : RESTHandler = {
-    case a if Path.isPrefix(path,a.path) => handle.applyOrElse(RESTAction.matchPrefix(path,a).get, nfh.notFound)
+  def prefix(path: Path)(handle: RESTHandler)(implicit req: Request) : RESTHandler = {
+    case a if Path.isPrefix(path,a.path) => handle.applyOrElse(RESTAction.matchPrefix(path,a).get, notFound)
   }
 
   @inline
   def prefix(path: String, ignoreLeadingSlash: Boolean = true)
-            (handle: RESTHandler)(implicit notFound: NotFoundHandler) : RESTHandler =
+            (handle: RESTHandler)(implicit req: Request) : RESTHandler =
     prefix( Path(path,ignoreLeadingSlash) )(handle)
 
   def get(handle: RESTAction.GET=>Unit) : RESTHandler = {
@@ -80,11 +82,11 @@ package object dsl {
 //  def bool(name: String, default: =>Boolean)(implicit act: RESTAction): Boolean = BooleanParam(name,default)
 
   // TODO: better way to extract the param?
-  def bool(name: String)(handle: RESTHandler)(implicit nfh: NotFoundHandler) : RESTHandler = {
-    case GET(Seq(BooleanParam(p), xs @ _*),params) => handle.applyOrElse(GET(xs,params.updated(name,p)),nfh.notFound)
-    case PUT(Seq(BooleanParam(p), xs @ _*),params,body) => handle.applyOrElse(PUT(xs,params.updated(name,p),body),nfh.notFound)
-    case POST(Seq(BooleanParam(p), xs @ _*),params,body) => handle.applyOrElse(POST(xs,params.updated(name,p),body),nfh.notFound)
-    case DELETE(Seq(BooleanParam(p), xs @ _*),params) => handle.applyOrElse(DELETE(xs,params.updated(name,p)),nfh.notFound)
+  def bool(name: String)(handle: RESTHandler)(implicit req: Request) : RESTHandler = {
+    case GET(Seq(BooleanParam(p), xs @ _*),params) => handle.applyOrElse(GET(xs,params.updated(name,p)),notFound)
+    case PUT(Seq(BooleanParam(p), xs @ _*),params,body) => handle.applyOrElse(PUT(xs,params.updated(name,p),body),notFound)
+    case POST(Seq(BooleanParam(p), xs @ _*),params,body) => handle.applyOrElse(POST(xs,params.updated(name,p),body),notFound)
+    case DELETE(Seq(BooleanParam(p), xs @ _*),params) => handle.applyOrElse(DELETE(xs,params.updated(name,p)),notFound)
   }
 
 
@@ -95,11 +97,11 @@ package object dsl {
 //  def int(name: String, default: =>Int)(implicit act: RESTAction): Int = IntParam(name,default)
 
   // TODO: better way to extract the param?
-  def int(name: String)(handle: RESTHandler)(implicit nfh: NotFoundHandler) : RESTHandler = {
-    case GET(Seq(IntParam(p), xs @ _*),params) => handle.applyOrElse(GET(xs,params.updated(name,p)),nfh.notFound)
-    case PUT(Seq(IntParam(p), xs @ _*),params,body) => handle.applyOrElse(PUT(xs,params.updated(name,p),body),nfh.notFound)
-    case POST(Seq(IntParam(p), xs @ _*),params,body) => handle.applyOrElse(POST(xs,params.updated(name,p),body),nfh.notFound)
-    case DELETE(Seq(IntParam(p), xs @ _*),params) => handle.applyOrElse(DELETE(xs,params.updated(name,p)),nfh.notFound)
+  def int(name: String)(handle: RESTHandler)(implicit req: Request) : RESTHandler = {
+    case GET(Seq(IntParam(p), xs @ _*),params) => handle.applyOrElse(GET(xs,params.updated(name,p)),notFound)
+    case PUT(Seq(IntParam(p), xs @ _*),params,body) => handle.applyOrElse(PUT(xs,params.updated(name,p),body),notFound)
+    case POST(Seq(IntParam(p), xs @ _*),params,body) => handle.applyOrElse(POST(xs,params.updated(name,p),body),notFound)
+    case DELETE(Seq(IntParam(p), xs @ _*),params) => handle.applyOrElse(DELETE(xs,params.updated(name,p)),notFound)
   }
 
 //  @inline
@@ -107,4 +109,26 @@ package object dsl {
 //
 //  @inline
 //  def string(name: String, default: =>String)(implicit act: RESTAction): String = StringParam(name,default)
+
+  @inline
+  def ok(body: String, ctype: ContentType = ContentType.PLAIN)(implicit req: Request) : Unit = req ! OK(body,ctype)
+
+  @inline
+  def respondWithResource(path: String, ctype: ContentType, status: Int = 200)(implicit req: Request) : Unit =
+    req ! RespondWithResource(path,ctype,status)
+
+  @inline
+  def noContent(implicit req: Request) : Unit = req ! NoContent
+
+  @inline
+  def notFound(implicit req: Request) : Unit = req ! NotFound
+
+  @inline
+  def conflict(msg: String)(implicit req: Request) : Unit = req ! Conflict(msg)
+
+  @inline
+  def badRequest(msg: String)(implicit req: Request) : Unit = req ! BadRequest(msg)
+
+  @inline
+  def notFound(act: RESTAction)(implicit req: Request) : Unit = notFound
 }

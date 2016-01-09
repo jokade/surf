@@ -95,7 +95,7 @@ lazy val rest_nodejs = project.
   settings(
     name := "surf-rest-nodejs",
     libraryDependencies ++= Seq(
-      "biz.enef" %%% "scalajs-nodejs" % "0.1-SNAPSHOT"
+      "de.surfice" %%% "scalajs-nodejs" % "0.1-SNAPSHOT"
     )
   )
 

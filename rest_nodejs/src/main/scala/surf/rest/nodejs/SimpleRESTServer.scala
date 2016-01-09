@@ -7,20 +7,20 @@
 package surf.rest.nodejs
 
 import nodejs.http.{IncomingMessage, ServerResponse}
-import nodejs.{Http, URL}
+import nodejs._
 import slogging.LazyLogging
 import surf.rest.RESTResponse._
 import surf.{ServiceProps, ServiceRefFactory, ServiceRef}
 import surf.dsl._
 import surf.rest.RESTAction.{DELETE, GET, POST, PUT}
-import surf.rest.RESTService
+import surf.rest.{RESTAction, RESTService}
 
 import scala.concurrent.ExecutionContext
 import scala.scalajs.js
 
-class SimpleRESTServer(port: Short, root: ServiceRef)(implicit ec: ExecutionContext) extends LazyLogging {
+class SimpleRESTServer(port: Int, root: ServiceRef)(implicit ec: ExecutionContext) extends LazyLogging {
   private lazy val _server = Http.createServer(receive _)
-  _server.listen(port)
+  _server.listen(port.toShort)
   logger.info(s"Started HTTP server on port $port")
 
   def shutdown(after: ()=>Unit = null): Unit = {
@@ -51,8 +51,10 @@ class SimpleRESTServer(port: Short, root: ServiceRef)(implicit ec: ExecutionCont
     action >> root onSuccess {
       case OK(write,ctype) =>
         res.writeHead(200,js.Dictionary("Content-Type"->ctype))
-        ??? //write(new ResponseWriterWrapper(res))
+        writeBody(write,res)
         res.end()
+      case RespondWithResource(file,ctype,status) =>
+        sendResource(action,file,ctype,status,res)
       case NoContent =>
         res.writeHead(204)
         res.end()
@@ -81,7 +83,28 @@ class SimpleRESTServer(port: Short, root: ServiceRef)(implicit ec: ExecutionCont
     }
   }
 
+  private def writeBody(write: ResponseWriter, res: ServerResponse) : Unit = write match {
+    case Left(w) => w(new StringResponseWriter(res))
+    case Right(w) => ???
+  }
 
+  private def sendResource(action: RESTAction, file: String, ctype: String, status: Int, res: ServerResponse) : Unit =
+    FS().readFile(file, (err:NodeError, data:js.UndefOr[NodeBuffer]) =>{
+      if(err!=null) {
+        logger.debug(s"Could not respond with resource '$file': ${err.message}")
+        res.writeHead(404)
+        res.end()
+      }
+      else {
+        res.writeHead(status,js.Dictionary("Content-Type"->ctype))
+        res.end(data.get)
+      }
+    })
+
+
+  private class StringResponseWriter(res: ServerResponse) extends StringWriter {
+    override def write(s: String): Unit = res.write(s)
+  }
 }
 
 

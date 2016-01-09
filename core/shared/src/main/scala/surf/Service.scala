@@ -31,7 +31,7 @@ abstract class Service extends MessageProcessor {
    */
   def handleException(ex: Throwable) : Unit = { Console.err.println(ex) }
 
-  final override def request : Request = _req
+  implicit final override def request : Request = _req
   final override def isRequest : Boolean = _req != NullRequest
   protected[surf] def handle(req: Request, data: Any): Unit = {
     _req = req
