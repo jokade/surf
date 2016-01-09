@@ -9,6 +9,7 @@ package surf
 package object rest {
   type Path = Seq[String]
   type Params = Map[String,Any]
+  type PathParams = Seq[Any]
   type Body = String
   type RESTHandler = PartialFunction[RESTAction,Unit]
 
@@ -37,4 +38,5 @@ package object rest {
     val empty: Path = Seq()
 
   }
+
 }

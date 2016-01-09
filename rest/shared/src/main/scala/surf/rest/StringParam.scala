@@ -28,5 +28,17 @@ object StringParam {
     case a: Array[_] => a.asInstanceOf[Array[String]].head
   }
 
+  def apply(name: String)(implicit act: RESTAction) : Option[String] = apply(act.params,name)
+
+  /**
+   * Returns the first request parameter with the specified name, or the default value.
+   *
+   * @param params request parameters
+   * @param name the name of the request parameter to be returned
+   * @param default Default value to be used if the parameter is not set in the provided Params map.
+   * @return request parameter value, or None, if the parameter does not exist, or is not a boolean.
+   */
   def apply(params: Params, name: String, default: =>String) : String = apply(params,name).getOrElse(default)
+
+  def apply(name: String, default: =>String)(implicit act: RESTAction) : String = apply(act.params,name,default)
 }
