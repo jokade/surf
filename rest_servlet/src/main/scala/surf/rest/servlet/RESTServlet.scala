@@ -99,7 +99,6 @@ object RESTServlet {
     @inline
     final def path(req: HttpServletRequest) : Path = Path(req.getPathInfo)
 
-    @inline
     final def body(req: HttpServletRequest) : String = {
       val len = req.getContentLength
       req.getReader.lines().reduce(new BinaryOperator[String] {
@@ -132,10 +131,4 @@ object RESTServlet {
     }
   }
 
-  class HttpServletResponseWriter(resp: HttpServletResponse) extends ResponseWriter {
-    override def write(s: String): Unit = resp.getWriter.write(s)
-  }
-  object HttpServletResponseWriter {
-    def apply(resp: HttpServletResponse): ResponseWriter = new HttpServletResponseWriter(resp)
-  }
 }

@@ -51,7 +51,7 @@ class SimpleRESTServer(port: Short, root: ServiceRef)(implicit ec: ExecutionCont
     action >> root onSuccess {
       case OK(write,ctype) =>
         res.writeHead(200,js.Dictionary("Content-Type"->ctype))
-        write(new ResponseWriterWrapper(res))
+        ??? //write(new ResponseWriterWrapper(res))
         res.end()
       case NoContent =>
         res.writeHead(204)
@@ -82,10 +82,6 @@ class SimpleRESTServer(port: Short, root: ServiceRef)(implicit ec: ExecutionCont
   }
 
 
-  private final class ResponseWriterWrapper(resp: ServerResponse) extends ResponseWriter {
-    @inline
-    final override def write(s: String): Unit = resp.write(s)
-  }
 }
 
 

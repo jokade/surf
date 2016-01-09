@@ -8,7 +8,7 @@ package surf.rest.nodejs
 
 import nodejs.FS
 import surf.rest.RESTResponse.OK
-import surf.rest.{RESTContentType, RESTResponse}
+import surf.rest.{ContentType, RESTResponse}
 
 object RespondWithFile {
   /**
@@ -17,7 +17,7 @@ object RespondWithFile {
    * @param file Path to the file to be returned
    * @param contentType content type of the file
    */
-  def apply(file: String, contentType: String = RESTContentType.PLAIN) : RESTResponse.OK =
+  def apply(file: String, contentType: String = ContentType.PLAIN) : RESTResponse.OK =
     OK(FS().readFileSync(file),contentType)
 
 }

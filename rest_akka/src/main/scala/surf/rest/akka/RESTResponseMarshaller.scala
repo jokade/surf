@@ -7,7 +7,7 @@
 package surf.rest.akka
 
 import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaType}
-import surf.rest.{RESTContentType, RESTResponse}
+import surf.rest.{ContentType, RESTResponse}
 import surf.rest.RESTResponse.OK
 
 object RESTResponseMarshaller {
@@ -19,7 +19,7 @@ object RESTResponseMarshaller {
 
   implicit val RESTResponseContentMarshaller : ToEntityMarshaller[RESTResponse] =
     Marshaller.withOpenCharset(`application/json`) {
-      case (OK(data,RESTContentType.JSON),_) => HttpEntity(jsonType,data.toString)
+      case (OK(data,ContentType.JSON),_) => HttpEntity(jsonType,data.toString)
       case _ => ???
     }
 }

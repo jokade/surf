@@ -9,11 +9,10 @@ package surf.rest.servlet
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
 import surf.rest.RESTResponse._
-import surf.rest.servlet.RESTServlet.HttpServletResponseWriter
-import surf.rest.{RESTRequest, RESTAction, RESTResolver}
+import surf.rest.{RESTAction, RESTRequest, RESTResolver}
 
-import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext}
 import scala.util.{Failure, Success}
 
 class SyncRESTServlet(val resolver: RESTResolver, timeout: Duration)
@@ -35,7 +34,7 @@ class SyncRESTServlet(val resolver: RESTResolver, timeout: Duration)
     case OK(writeData,ctype) =>
       resp.setStatus(200)
       resp.setContentType(ctype)
-      writeData(HttpServletResponseWriter(resp))
+      writeBody(writeData,resp)
     case NoContent =>
       resp.setStatus(204)
     case BadRequest(msg) =>
@@ -61,4 +60,12 @@ class SyncRESTServlet(val resolver: RESTResolver, timeout: Duration)
     resp.sendError(status,msg)
   }
 
+  private def writeBody(write: ResponseWriter, resp: HttpServletResponse): Unit = write match {
+    case Left(w) => w( new ServletResponseWriter(resp) )
+    case Right(w) => w( resp.getOutputStream)
+  }
+
+  private class ServletResponseWriter(resp: HttpServletResponse) extends StringWriter {
+    override def write(s: String): Unit = resp.getWriter.write(s)
+  }
 }

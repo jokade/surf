@@ -6,7 +6,7 @@
 //               Distributed under the MIT License (see included file LICENSE)
 package surf.rest
 
-import java.io.{OutputStream, Writer}
+import java.io.OutputStream
 
 /**
  * Response to a REST request (ie a request with a [[RESTAction]] message).
@@ -18,23 +18,41 @@ sealed trait RESTResponse
  */
 object RESTResponse {
 
-  trait ResponseWriter {
+  type ContentType = String
+
+  trait StringWriter {
     def write(s: String) : Unit
   }
+  type ResponseWriter = Either[StringWriter=>Unit,OutputStream=>Unit]
+
 
   /**
    * Response to a successful request (HTTP Code: 200)
    *
    * @param writeResponse called with the writer to which the response data should be written
    */
-  case class OK(writeResponse: (ResponseWriter)=>Unit, ctype: String) extends RESTResponse
+  case class OK(writeResponse: ResponseWriter, ctype: ContentType) extends RESTResponse
   object OK {
+    def apply(write: (StringWriter)=>Unit, ctype: ContentType) : OK = OK( Left(write), ctype )
+    def stream(write: (OutputStream)=>Unit, ctype: ContentType) : OK = OK( Right(write), ctype )
+
     /**
+     * Response to a successful reqeust with a string body.
+     *
      * @param data response data (written using its `toString` method)
      */
-    def apply(data: String, ctype: String = RESTContentType.JSON): OK =
-      OK( (w:ResponseWriter) => w.write(data.toString), ctype )
+    def apply(data: String, ctype: ContentType = ContentType.JSON): OK = OK((w:StringWriter) => w.write(data), ctype )
+
   }
+
+  /**
+   * Respond to a request with the specified resource.
+   *
+   * @param path Path to the resource to be used as the response body (e.g. path to a HTML file)
+   * @param ctype Content type
+   * @param status HTTP status code (default: OK/200)
+   */
+  case class RespondWithResource(path: String, ctype: ContentType, status: Int = 200) extends RESTResponse
 
   /**
    * The requested resource was successfully created (HTTP Code: 201)
@@ -78,7 +96,7 @@ object RESTResponse {
 }
 
 
-object RESTContentType {
+object ContentType {
   val JSON = "application/json"
   val HTML = "text/html"
   val PLAIN = "text/plain"

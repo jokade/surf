@@ -26,50 +26,50 @@ package object dsl {
             (handle: RESTHandler)(implicit notFound: NotFoundHandler) : RESTHandler =
     prefix( Path(path,ignoreLeadingSlash) )(handle)
 
-  def get(handle: RESTAction=>Unit) : RESTHandler = {
+  def get(handle: RESTAction.GET=>Unit) : RESTHandler = {
     case a:GET if a.path.isEmpty => handle(a)
   }
 
   @inline
-  def get(path: String)(handle: RESTAction=>Unit) : RESTHandler = get(Path(path))(handle)
+  def get(path: String)(handle: RESTAction.GET=>Unit) : RESTHandler = get(Path(path))(handle)
 
-  def get(path: Path)(handle: RESTAction=>Unit) : RESTHandler = {
+  def get(path: Path)(handle: RESTAction.GET=>Unit) : RESTHandler = {
     case a:GET if a.path == path => handle(a.withPath(Path.empty))
   }
 
 
-  def put(handle: RESTAction=>Unit) : RESTHandler = {
+  def put(handle: RESTAction.PUT=>Unit) : RESTHandler = {
     case a:PUT if a.path.isEmpty => handle(a)
   }
 
   @inline
-  def put(path: String)(handle: RESTAction=>Unit) : RESTHandler = put(Path(path))(handle)
+  def put(path: String)(handle: RESTAction.PUT=>Unit) : RESTHandler = put(Path(path))(handle)
 
-  def put(path: Path)(handle: RESTAction=>Unit) : RESTHandler = {
+  def put(path: Path)(handle: RESTAction.PUT=>Unit) : RESTHandler = {
     case a:PUT if a.path == path => handle(a)
   }
 
 
-  def post(handle: RESTAction=>Unit) : RESTHandler = {
+  def post(handle: RESTAction.POST=>Unit) : RESTHandler = {
     case a:POST if a.path.isEmpty => handle(a)
   }
 
   @inline
-  def post(path: String)(handle: RESTAction=>Unit) : RESTHandler = post(Path(path))(handle)
+  def post(path: String)(handle: RESTAction.POST=>Unit) : RESTHandler = post(Path(path))(handle)
 
-  def post(path: Path)(handle: RESTAction=>Unit) : RESTHandler = {
+  def post(path: Path)(handle: RESTAction.POST=>Unit) : RESTHandler = {
     case a:POST if a.path == path => handle(a)
   }
 
 
-  def delete(handle: RESTAction=>Unit) : RESTHandler = {
+  def delete(handle: RESTAction.DELETE=>Unit) : RESTHandler = {
     case a:DELETE if a.path.isEmpty => handle(a)
   }
 
   @inline
-  def delete(path: String)(handle: RESTAction=>Unit) : RESTHandler = delete(Path(path))(handle)
+  def delete(path: String)(handle: RESTAction.DELETE=>Unit) : RESTHandler = delete(Path(path))(handle)
 
-  def delete(path: Path)(handle: RESTAction=>Unit) : RESTHandler = {
+  def delete(path: Path)(handle: RESTAction.DELETE=>Unit) : RESTHandler = {
     case a:DELETE if a.path == path => handle(a)
   }
 
