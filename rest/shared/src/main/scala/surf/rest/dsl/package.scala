@@ -19,13 +19,13 @@ package object dsl {
     def ~(next: RESTHandler) : RESTHandler = handler orElse next
   }
 
-  def prefix(path: Path)(handle: RESTHandler)(implicit req: Request) : RESTHandler = {
+  def prefix(path: Path)(handle: RESTHandler)(implicit rp: RequestProvider) : RESTHandler = {
     case a if Path.isPrefix(path,a.path) => handle.applyOrElse(RESTAction.matchPrefix(path,a).get, notFound)
   }
 
   @inline
   def prefix(path: String, ignoreLeadingSlash: Boolean = true)
-            (handle: RESTHandler)(implicit req: Request) : RESTHandler =
+            (handle: RESTHandler)(implicit rp: RequestProvider) : RESTHandler =
     prefix( Path(path,ignoreLeadingSlash) )(handle)
 
   def get(handle: RESTAction.GET=>Unit) : RESTHandler = {
@@ -82,7 +82,7 @@ package object dsl {
 //  def bool(name: String, default: =>Boolean)(implicit act: RESTAction): Boolean = BooleanParam(name,default)
 
   // TODO: better way to extract the param?
-  def bool(name: String)(handle: RESTHandler)(implicit req: Request) : RESTHandler = {
+  def bool(name: String)(handle: RESTHandler)(implicit rp: RequestProvider) : RESTHandler = {
     case GET(Seq(BooleanParam(p), xs @ _*),params) => handle.applyOrElse(GET(xs,params.updated(name,p)),notFound)
     case PUT(Seq(BooleanParam(p), xs @ _*),params,body) => handle.applyOrElse(PUT(xs,params.updated(name,p),body),notFound)
     case POST(Seq(BooleanParam(p), xs @ _*),params,body) => handle.applyOrElse(POST(xs,params.updated(name,p),body),notFound)
@@ -97,7 +97,7 @@ package object dsl {
 //  def int(name: String, default: =>Int)(implicit act: RESTAction): Int = IntParam(name,default)
 
   // TODO: better way to extract the param?
-  def int(name: String)(handle: RESTHandler)(implicit req: Request) : RESTHandler = {
+  def int(name: String)(handle: RESTHandler)(implicit rp: RequestProvider) : RESTHandler = {
     case GET(Seq(IntParam(p), xs @ _*),params) => handle.applyOrElse(GET(xs,params.updated(name,p)),notFound)
     case PUT(Seq(IntParam(p), xs @ _*),params,body) => handle.applyOrElse(PUT(xs,params.updated(name,p),body),notFound)
     case POST(Seq(IntParam(p), xs @ _*),params,body) => handle.applyOrElse(POST(xs,params.updated(name,p),body),notFound)
@@ -111,24 +111,97 @@ package object dsl {
 //  def string(name: String, default: =>String)(implicit act: RESTAction): String = StringParam(name,default)
 
   @inline
-  def ok(body: String, ctype: ContentType = ContentType.PLAIN)(implicit req: Request) : Unit = req ! OK(body,ctype)
+  def ok(body: String, ctype: ContentType = ContentType.PLAIN)(implicit rp: RequestProvider) : Unit = rp.request ! OK(body,ctype)
 
   @inline
-  def respondWithResource(path: String, ctype: ContentType, status: Int = 200)(implicit req: Request) : Unit =
-    req ! RespondWithResource(path,ctype,status)
+  def respondWithResource(path: String, ctype: ContentType, status: Int = 200)(implicit rp: RequestProvider) : Unit =
+    rp.request ! RespondWithResource(path,ctype,status)
 
   @inline
-  def noContent(implicit req: Request) : Unit = req ! NoContent
+  def noContent(implicit rp: RequestProvider) : Unit = rp.request ! NoContent
 
   @inline
-  def notFound(implicit req: Request) : Unit = req ! NotFound
+  def notFound(implicit rp: RequestProvider) : Unit = rp.request ! NotFound
 
   @inline
-  def conflict(msg: String)(implicit req: Request) : Unit = req ! Conflict(msg)
+  def conflict(msg: String)(implicit rp: RequestProvider) : Unit = rp.request ! Conflict(msg)
 
   @inline
-  def badRequest(msg: String)(implicit req: Request) : Unit = req ! BadRequest(msg)
+  def badRequest(msg: String)(implicit rp: RequestProvider) : Unit = rp.request ! BadRequest(msg)
 
   @inline
-  def notFound(act: RESTAction)(implicit req: Request) : Unit = notFound
+  def notFound(act: RESTAction)(implicit rp: RequestProvider) : Unit = notFound
+
+  /**
+   * Serves GET requests to static resources.
+   *
+   * @example ```
+   * prefix("resource") {
+   *   serveStatic {
+   *     case PathWithSuffix(path,"js") => ("js/"+path,"text/javascript")
+   *     case PathWithSuffix(path,_)    => (path,"text/plain")
+   *   }
+   * }
+   * ```
+   *
+   * @param handle A partial function that returns a tuple containing the resolved path of the resource to be served
+   *               and the [[ContentType]] of the resource.
+   * @param rp
+   */
+  def serveStatic(handle: PartialFunction[Path,(String,ContentType)])(implicit rp: RequestProvider) : RESTHandler = {
+    case GET(path,_) => handle.applyOrElse(path, (_:Path) => (null:String,null:ContentType) ) match {
+      case (null,null) => notFound
+      case (resource,ctype) => respondWithResource(resource,ctype)
+    }
+  }
+
+  /**
+   * Serves GET requests to a static resource.
+   *
+   * @example ```
+   * prefix("resource") {
+   *   serveStatic("/path/to/resources")
+   * }
+   * ```
+   *
+   * @param prefix Prefix path used to resolve all resource requests (i.e. the base directory)
+   * @param rp
+   */
+  def serverStatic(prefix: String)(implicit rp: RequestProvider) : RESTHandler = {
+    case GET(PathWithContentType(file,ctype),_) => respondWithResource(prefix + file, ctype)
+  }
+
+  object PathWithSuffix {
+    /**
+     * Splits a [[Path]] into the full path string and the file suffix (ie the string after the last '.')
+     *
+     * @param p
+     */
+    def unapply(p: Path) : Option[(String,String)] =
+      if(p.isEmpty) None
+      else p.last.split("\\.") match {
+        case s if s.size == 1 =>
+          Some((p.mkString("/"),""))
+        case s =>
+          Some((p.mkString("/"),s.last))
+        }
+  }
+
+  object PathWithContentType {
+    /**
+     * Splits a [[Path]] into the full path string and the [[ContentType]] as indicated by the file suffix.
+     *
+     * @param p
+     */
+    def unapply(p: Path): Option[(String, ContentType)] = PathWithSuffix.unapply(p) match {
+      case Some((file,suffix)) => ContentType.fromSuffix(suffix) map ((file,_))
+      case _ => None
+    }
+  }
+}
+
+package dsl {
+  trait RequestProvider {
+    def request: Request
+  }
 }

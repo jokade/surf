@@ -8,6 +8,8 @@ package surf.rest
 
 import java.io.OutputStream
 
+import surf.rest.RESTResponse.ContentType
+
 /**
  * Response to a REST request (ie a request with a [[RESTAction]] message).
  */
@@ -97,8 +99,18 @@ object RESTResponse {
 
 
 object ContentType {
-  val JSON = "application/json"
-  val HTML = "text/html"
-  val PLAIN = "text/plain"
-  val CALENDAR = "text/calendar"
+  val CALENDAR     = "text/calendar"
+  val CSS          = "text/css"
+  val HTML         = "text/html"
+  val JAVASCRIPT   = "text/javascript"
+  val JSON         = "application/json"
+  val PLAIN        = "text/plain"
+
+  def fromSuffix(suffix: String) : Option[ContentType] = suffix match {
+    case "css"  => Some(CSS)
+    case "html" => Some(HTML)
+    case "js"   => Some(JAVASCRIPT)
+    case "json" => Some(JSON)
+    case "txt"  => Some(PLAIN)
+  }
 }

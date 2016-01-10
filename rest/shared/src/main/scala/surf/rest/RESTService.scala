@@ -8,14 +8,12 @@ package surf.rest
 
 import surf.Service
 import surf.rest.RESTResponse.NotFound
-import surf.rest.dsl.NotFoundHandler
-
-import scala.collection.mutable
+import surf.rest.dsl.RequestProvider
 
 /**
  * Base class for REST services.
  */
-abstract class RESTService extends Service with NotFoundHandler {
+abstract class RESTService extends Service with RequestProvider {
 
   def handle: RESTHandler
 
@@ -24,14 +22,13 @@ abstract class RESTService extends Service with NotFoundHandler {
     if(isRequest) ???
     else {}
 
-  implicit val notFoundHandler: NotFoundHandler = this
+  implicit def requestProvider: RequestProvider = this
 
   override def process = {
-    case r: RESTAction => handle.applyOrElse(r, notFound )
+    case r: RESTAction => handle.applyOrElse(r, (_:RESTAction) => request ! NotFound )
     case x => otherMessage(x)
   }
 
-  override def notFound(act: RESTAction): Unit = request ! NotFound
 }
 
 
