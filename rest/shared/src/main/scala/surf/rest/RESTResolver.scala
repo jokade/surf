@@ -6,7 +6,7 @@
 //               Distributed under the MIT license (see included LICENSE file)
 package surf.rest
 
-import surf.{ServiceRefFactory, ServiceProps, ServiceRef}
+import surf.{Service, ServiceRefFactory, ServiceProps, ServiceRef}
 
 /**
  * Resolves RESTActions into [[RESTService]]s.
@@ -45,6 +45,24 @@ object RESTResolver {
 
   def fromPrefixMappings(prefixMappings: (Path,ServiceProps)*)(implicit f: ServiceRefFactory): RESTResolver =
     new MappingResolver(prefixMappings.toMap)
+
+  /**
+   * Creates a RESTResolver that sends all requests to the specified service.
+   *
+   * @param props
+   * @param f
+   */
+  def fromService(props: ServiceProps)(implicit f: ServiceRefFactory): RESTResolver = new SingleResolver(f.serviceOf(props))
+  def fromService(service: =>Service)(implicit f: ServiceRefFactory): RESTResolver = fromService(ServiceProps(service))
+
+  def fromHandler(handler: RESTHandler)(implicit f: ServiceRefFactory): RESTResolver = new SingleResolver(handler)
+
+  class SingleResolver(handler: ServiceRef) extends RESTResolver {
+    def this(handler: RESTHandler)(implicit f: ServiceRefFactory) = this(f.serviceOf(new RESTService {
+      override def handle: RESTHandler = ???
+    }))
+    override def resolveRESTService(action: RESTAction): Option[(ServiceRef, RESTAction)] = Some((handler,action))
+  }
 
   trait Wrapper extends RESTResolver {
     def subresolvers: collection.IterableView[RESTResolver,Iterable[RESTResolver]]

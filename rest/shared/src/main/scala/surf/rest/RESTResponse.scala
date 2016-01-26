@@ -23,7 +23,7 @@ object RESTResponse {
   type ContentType = String
 
   trait StringWriter {
-    def write(s: String) : Unit
+    def write(s: String, charset: String) : Unit
   }
   type ResponseWriter = Either[StringWriter=>Unit,OutputStream=>Unit]
 
@@ -43,7 +43,8 @@ object RESTResponse {
      *
      * @param data response data (written using its `toString` method)
      */
-    def apply(data: String, ctype: ContentType = ContentType.JSON): OK = OK((w:StringWriter) => w.write(data), ctype )
+    def apply(data: String, ctype: ContentType = ContentType.JSON, charset: String = Charset.UTF8): OK =
+      OK((w:StringWriter) => w.write(data,charset), ctype )
 
   }
 
@@ -113,4 +114,8 @@ object ContentType {
     case "json" => Some(JSON)
     case "txt"  => Some(PLAIN)
   }
+}
+
+object Charset {
+  val UTF8 = "utf-8"
 }

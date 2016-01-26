@@ -18,14 +18,17 @@ import scala.util.{Failure, Success}
 class SyncRESTServlet(val resolver: RESTResolver, timeout: Duration)
                      (implicit ec: ExecutionContext) extends RESTServlet.Base {
 
+  def postProcess(resp: HttpServletResponse): Unit = {}
 
   override def handleRequest(action: RESTAction, req: HttpServletRequest, resp: HttpServletResponse): Unit =
     resolver.resolveRESTService(action) match {
       case None =>
         resp.setStatus(404)
+        postProcess(resp)
       case Some((service,act)) =>
         val result = Await.result( (RESTRequest(act,annotations(req)) >> service).future, timeout )
         handleResult(result,resp)
+        postProcess(resp)
     }
 
   // TODO: do we need to return a PartialFunction here?

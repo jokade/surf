@@ -45,7 +45,7 @@ lazy val rest = crossProject.
     name := "surf-rest",
     libraryDependencies ++= Seq(
       "com.lihaoyi" %% "upickle" % "0.2.8",
-      "biz.enef"    %%% "slogging" % "0.3"
+      "biz.enef"    %% "slogging" % "0.4.0"
     )
   )
 
