@@ -50,6 +50,9 @@ class SimpleRESTServer(config: Config, resolver: RESTResolver) extends LazyLoggi
 object SimpleRESTServer {
   case class Config(port: Int, path: String, timeout: Duration, executionContext: ExecutionContext)
 
+  def apply(port: Int, path: String, resolver: RESTResolver)(implicit ec: ExecutionContext) : SimpleRESTServer =
+    new SimpleRESTServer(Config(port,path,Duration(5,"seconds"),ec),resolver)
+
   class SimpleRESTHandler(config: Config, resolver: RESTResolver) extends HttpHandler with LazyLogging {
     import config.timeout
     implicit val ec = config.executionContext

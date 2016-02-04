@@ -69,6 +69,6 @@ class SyncRESTServlet(val resolver: RESTResolver, timeout: Duration)
   }
 
   private class ServletResponseWriter(resp: HttpServletResponse) extends StringWriter {
-    override def write(s: String): Unit = resp.getWriter.write(s)
+    override def write(s: String, charset: String): Unit = resp.getWriter.write(s)
   }
 }

@@ -167,7 +167,7 @@ package object dsl {
    * @param prefix Prefix path used to resolve all resource requests (i.e. the base directory)
    * @param rp
    */
-  def serverStatic(prefix: String)(implicit rp: RequestProvider) : RESTHandler = {
+  def serveStatic(prefix: String)(implicit rp: RequestProvider) : RESTHandler = {
     case GET(PathWithContentType(file,ctype),_) => respondWithResource(prefix + file, ctype)
   }
 

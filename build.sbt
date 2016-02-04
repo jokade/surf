@@ -2,7 +2,7 @@
 lazy val commonSettings = Seq(
   organization := "de.surfice",
   version := "0.1-SNAPSHOT",
-  scalaVersion := "2.11.6",
+  scalaVersion := "2.11.7",
   scalacOptions ++= Seq("-deprecation","-unchecked","-feature","-Xlint"),
   libraryDependencies ++= Seq(
     "com.lihaoyi" %%% "utest" % "0.3.1" % "test"
@@ -12,7 +12,7 @@ lazy val commonSettings = Seq(
 )
 
 lazy val root = project.in(file(".")).
-  aggregate(coreJVM, coreJS, restJVM, restJS, akka, rest_servlet, rest_nodejs).
+  aggregate(coreJVM, coreJS, restJVM, restJS, akka, rest_servlet). //, rest_nodejs).
   settings(commonSettings:_*).
   settings(
     name := "surf",

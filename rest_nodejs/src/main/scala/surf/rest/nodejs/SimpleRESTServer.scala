@@ -103,7 +103,7 @@ class SimpleRESTServer(port: Int, root: ServiceRef)(implicit ec: ExecutionContex
 
 
   private class StringResponseWriter(res: ServerResponse) extends StringWriter {
-    override def write(s: String): Unit = res.write(s)
+    override def write(s: String, charset: String): Unit = res.write(s)
   }
 }
 
