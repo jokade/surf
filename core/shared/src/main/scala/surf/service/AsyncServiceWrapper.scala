@@ -7,15 +7,24 @@
 package surf.service
 
 import surf.Request.NullRequest
-import surf.{Service, Request, ServiceRef}
+import surf.service.AsyncServiceWrapper.ServiceRunnable
+import surf.{Request, Service, ServiceRef}
 
 final class AsyncServiceWrapper(processor: Service) extends ServiceRef {
   @inline
-  final override def !(req: Request): Request = {
-    surf.plattform.invokeLater(()=>processor.handle(req,req.input))
+  override def !(req: Request): Request = {
+    surf.plattform.invokeLater(new ServiceRunnable(processor,req,req.input))
     req
   }
 
   @inline
-  final override def !(msg: Any): Unit = surf.plattform.invokeLater( ()=>processor.handle(NullRequest,msg) )
+  override def !(msg: Any): Unit = surf.plattform.invokeLater(new ServiceRunnable(processor,NullRequest,msg))
+}
+
+object AsyncServiceWrapper {
+  class ServiceRunnable(processor: Service, req: Request, msg: Any) extends Runnable {
+    override def run(): Unit = processor.synchronized{
+      processor.handle(req,msg)
+    }
+  }
 }

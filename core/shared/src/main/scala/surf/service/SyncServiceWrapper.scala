@@ -18,13 +18,15 @@ import surf.{Request, ServiceRef, Service}
  */
 final class SyncServiceWrapper(processor: Service) extends ServiceRef {
   processor.self = this
+
   @inline
-  final override def !(req: Request): Request = this.synchronized{
+  override def !(req: Request): Request = this.synchronized{
     processor.handle(req,req.input)
     req
   }
+
   @inline
-  final override def !(msg: Any) : Unit = this.synchronized{
+  override def !(msg: Any) : Unit = this.synchronized{
     processor.handle(NullRequest,msg)
   }
 }

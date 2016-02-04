@@ -12,11 +12,8 @@ import scala.scalajs.js.UndefOr
 package object plattform {
   import scalajs.js.Dynamic.global
 
-  private lazy val _invokeLater = global.setImmediate.asInstanceOf[UndefOr[js.Function]].getOrElse{
-    (callback: js.Function) => global.setTimeout(callback,0)
-  }.asInstanceOf[js.Function1[js.Function,Any]]
 
   @inline
-  def invokeLater(callback: ()=>Any) : Unit = _invokeLater(callback)
+  def invokeLater(runnable: Runnable) : Unit = scalajs.concurrent.JSExecutionContext.queue.execute(runnable)
 
 }

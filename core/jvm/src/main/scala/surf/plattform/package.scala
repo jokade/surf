@@ -6,9 +6,11 @@
 //               Distributed under the MIT license (see included LICENSE file)
 package surf
 
+import java.util.concurrent.Callable
+
 package object plattform {
 
   @inline
-  def invokeLater(callback: ()=>Any) : Unit = ???
+  def invokeLater(runnable: Runnable) : Unit = concurrent.ExecutionContext.global.execute(runnable)
 
 }
