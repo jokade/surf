@@ -6,9 +6,10 @@
 //               Distributed under the MIT License (see included file LICENSE)
 package surf.rest
 
+import surf.rest.RESTResponse.ContentType
 import surf.{Annotations, Request}
 
-import scala.concurrent.{Promise, ExecutionContext}
+import scala.concurrent.{ExecutionContext, Promise}
 
 sealed trait RESTRequest extends Request {
   override def input: RESTAction
@@ -23,8 +24,11 @@ object RESTRequest {
   def get(path: Path, params: Params = Map(), annotations: Map[String,Any] = Map())(implicit ec: ExecutionContext) : RESTRequest =
     new Impl(GET(path,params),annotations)
 
-  def put(path: Path, body: Body = "", params: Params = Map(), annotations: Map[String,Any] = Map())(implicit ec: ExecutionContext) : RESTRequest =
-    new Impl(PUT(path,params,body),annotations)
+  def post(path: Path, body: Body, ctype: ContentType = ContentType.PLAIN, encoding: Encoding = "UTF-8", params: Params = Map(), annotations: Map[String,Any] = Map())(implicit ec: ExecutionContext) : RESTRequest =
+    new Impl(POST(path,params,body,ctype,encoding),annotations)
+
+  def put(path: Path, body: Body, ctype: ContentType = ContentType.PLAIN, encoding: Encoding = "UTF-8", params: Params = Map(), annotations: Map[String,Any] = Map())(implicit ec: ExecutionContext) : RESTRequest =
+    new Impl(PUT(path,params,body,ctype,encoding),annotations)
 
   private final class Impl(action: RESTAction, annotations: Annotations)(implicit ec: ExecutionContext)
     extends Request.Impl[RESTAction](action,Promise[Any](),annotations,null) with RESTRequest

@@ -57,7 +57,7 @@ object SimpleRESTServer {
     import config.timeout
     implicit val ec = config.executionContext
 
-    override def handle(req: HttpExchange): Unit = {
+    override def handle(req: HttpExchange): Unit = try {
       resolver.resolveRESTService(getRESTAction(req)) match {
         case None =>
           error(req,404,"Not found")
@@ -65,13 +65,25 @@ object SimpleRESTServer {
           val res = await{ RESTRequest(act) >> service }(timeout)
           handleResult(res, req)
       }
+    } catch {
+      case ex @ ServerException(code,msg) =>
+        logger.error(ex.toString)
+        error(req,code,msg)
+      case ex: Throwable =>
+        logger.error(ex.toString)
+        error(req,500,"Internal server error")
     }
 
     private def getRESTAction(req: HttpExchange) : RESTAction = {
       val path = getPath(req)
       val params = getParams(req)
+      val (ctype,encoding) = getContentType(req)
+      val body = req.getRequestBody
       val act = req.getRequestMethod match {
         case "GET" => RESTAction.GET(path,params)
+        case "POST" => RESTAction.POST(path,params,body,ctype,encoding)
+        case "PUT" => RESTAction.PUT(path,params,body,ctype,encoding)
+        case "DELETE" => RESTAction.DELETE(path,params)
         case x => throw new ServerException(405,s"Method '$x' not supported")
       }
       logger.debug(s"handling HTTP request $act (port: ${config.port}, context: ${config.path})")
@@ -113,6 +125,17 @@ object SimpleRESTServer {
 
     @inline
     private def getParams(req: HttpExchange): Params = Map()
+
+    @inline
+    private def getContentType(req: HttpExchange): (ContentType,Encoding) =
+      req.getRequestHeaders.getFirst("Content-Type") match {
+        case null => (ContentType.PLAIN, "UTF-8")
+        case s =>
+          s.split(";") match {
+            case Array(ctype) => (ctype, "UTF-8")
+            case Array(ctype, charset) => (ctype, charset.split("=").last)
+          }
+      }
 
     private def writeResponse(code: Int, ctype: String, writer: RESTResponse.ResponseWriter, req: HttpExchange) =
       writer match {

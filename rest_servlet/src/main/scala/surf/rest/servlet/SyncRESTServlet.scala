@@ -6,6 +6,8 @@
 //               Distributed under the MIT License (see included file LICENSE)
 package surf.rest.servlet
 
+import java.io.InputStream
+import java.nio.file.Files
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
 import surf.rest.RESTResponse._
@@ -38,6 +40,10 @@ class SyncRESTServlet(val resolver: RESTResolver, timeout: Duration)
       resp.setStatus(200)
       resp.setContentType(ctype)
       writeBody(writeData,resp)
+    case RespondWithStream(stream,ctype,status) =>
+      resp.setStatus(status)
+      resp.setContentType(ctype)
+      writeStream(stream,resp)
     case NoContent =>
       resp.setStatus(204)
     case BadRequest(msg) =>
@@ -66,6 +72,18 @@ class SyncRESTServlet(val resolver: RESTResolver, timeout: Duration)
   private def writeBody(write: ResponseWriter, resp: HttpServletResponse): Unit = write match {
     case Left(w) => w( new ServletResponseWriter(resp) )
     case Right(w) => w( resp.getOutputStream)
+  }
+
+  private def writeStream(in: InputStream, resp: HttpServletResponse): Unit = {
+    val buffer = new Array[Byte](1024)
+    val out = resp.getOutputStream
+    var len = in.read(buffer)
+    while (len != -1) {
+      out.write(buffer, 0, len)
+      len = in.read(buffer)
+    }
+    in.close()
+    out.close()
   }
 
   private class ServletResponseWriter(resp: HttpServletResponse) extends StringWriter {

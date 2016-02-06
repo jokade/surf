@@ -6,7 +6,7 @@
 //               Distributed under the MIT License (see included file LICENSE)
 package surf.rest
 
-import java.io.OutputStream
+import java.io.{InputStream, OutputStream}
 
 import surf.rest.RESTResponse.ContentType
 
@@ -58,6 +58,15 @@ object RESTResponse {
   case class RespondWithResource(path: String, ctype: ContentType, status: Int = 200) extends RESTResponse
 
   /**
+   * Respond to a request with the contents of the specified InputStream.
+   *
+   * @param stream InputStream from which to read the response body
+   * @param ctype Content type
+   * @param status HTTP status code (default: OK/200)
+   */
+  case class RespondWithStream(stream: InputStream, ctype: ContentType, status: Int = 200) extends RESTResponse
+
+  /**
    * The requested resource was successfully created (HTTP Code: 201)
    *
    * @param data the response data
@@ -104,15 +113,17 @@ object ContentType {
   val CSS          = "text/css"
   val HTML         = "text/html"
   val JAVASCRIPT   = "text/javascript"
+  val JPEG         = "image/jpeg"
   val JSON         = "application/json"
   val PLAIN        = "text/plain"
 
   def fromSuffix(suffix: String) : Option[ContentType] = suffix match {
-    case "css"  => Some(CSS)
-    case "html" => Some(HTML)
-    case "js"   => Some(JAVASCRIPT)
-    case "json" => Some(JSON)
-    case "txt"  => Some(PLAIN)
+    case "css"        => Some(CSS)
+    case "html"       => Some(HTML)
+    case "jpg"|"jpeg" => Some(JPEG)
+    case "js"         => Some(JAVASCRIPT)
+    case "json"       => Some(JSON)
+    case "txt"        => Some(PLAIN)
   }
 }
 

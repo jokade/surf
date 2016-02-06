@@ -11,7 +11,7 @@ import javax.servlet.AsyncContext
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 
 import surf.rest.RESTResponse._
-import surf.rest.{RESTAction, RESTResolver}
+import surf.rest.{Encoding, ContentType, RESTAction, RESTResolver}
 import surf.{Annotations, Request}
 
 import scala.collection.JavaConverters._
@@ -106,14 +106,20 @@ object RESTServlet {
       }).orElse("")
     }
 
+    @inline
+    final def ctype(req: HttpServletRequest): ContentType = ContentType.PLAIN
+
+    @inline
+    final def encoding(req: HttpServletRequest): Encoding = "UTF-8"
+
     final override def doGet(req: HttpServletRequest, resp: HttpServletResponse): Unit =
       handleRequest(RESTAction.GET(path(req),params(req)),req,resp)
 
     final override def doPut(req: HttpServletRequest, resp: HttpServletResponse): Unit =
-      handleRequest(RESTAction.PUT(path(req),params(req),body(req)),req,resp)
+      handleRequest(RESTAction.PUT(path(req),params(req),req.getInputStream,ctype(req),encoding(req)),req,resp)
 
     final override def doPost(req: HttpServletRequest, resp: HttpServletResponse): Unit =
-      handleRequest(RESTAction.POST(path(req),params(req),body(req)),req,resp)
+      handleRequest(RESTAction.POST(path(req),params(req),req.getInputStream,ctype(req),encoding(req)),req,resp)
 
     final override def doDelete(req: HttpServletRequest, resp: HttpServletResponse): Unit =
       handleRequest(RESTAction.DELETE(path(req),params(req)),req,resp)

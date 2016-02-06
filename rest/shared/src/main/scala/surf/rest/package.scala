@@ -6,11 +6,14 @@
 //               Distributed under the MIT license (see included LICENSE file)
 package surf
 
+import java.io.InputStream
+
 package object rest {
   type Path = Seq[String]
   type Params = Map[String,Any]
   type PathParams = Seq[Any]
-  type Body = String
+  type Body = InputStream
+  type Encoding = String
   type RESTHandler = PartialFunction[RESTAction,Unit]
 
   object Path {

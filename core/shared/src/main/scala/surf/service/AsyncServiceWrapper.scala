@@ -11,6 +11,8 @@ import surf.service.AsyncServiceWrapper.ServiceRunnable
 import surf.{Request, Service, ServiceRef}
 
 final class AsyncServiceWrapper(processor: Service) extends ServiceRef {
+  processor.self = this
+
   @inline
   override def !(req: Request): Request = {
     surf.plattform.invokeLater(new ServiceRunnable(processor,req,req.input))

@@ -6,6 +6,8 @@
 //               Distributed under the MIT license (see included LICENSE file)
 package surf.rest
 
+import java.io.InputStream
+
 import surf.Request
 import surf.rest.RESTAction.{DELETE, PUT, POST, GET}
 import surf.rest.RESTResponse._
@@ -83,9 +85,12 @@ package object dsl {
 
   // TODO: better way to extract the param?
   def bool(name: String)(handle: RESTHandler)(implicit rp: RequestProvider) : RESTHandler = {
-    case GET(Seq(BooleanParam(p), xs @ _*),params) => handle.applyOrElse(GET(xs,params.updated(name,p)),notFound)
-    case PUT(Seq(BooleanParam(p), xs @ _*),params,body) => handle.applyOrElse(PUT(xs,params.updated(name,p),body),notFound)
-    case POST(Seq(BooleanParam(p), xs @ _*),params,body) => handle.applyOrElse(POST(xs,params.updated(name,p),body),notFound)
+    case GET(Seq(BooleanParam(p), xs @ _*),params) =>
+      handle.applyOrElse(GET(xs,params.updated(name,p)),notFound)
+    case PUT(Seq(BooleanParam(p), xs @ _*),params,body,ctype,encoding) =>
+      handle.applyOrElse(PUT(xs,params.updated(name,p),body,ctype,encoding),notFound)
+    case POST(Seq(BooleanParam(p), xs @ _*),params,body,ctype,encoding) =>
+      handle.applyOrElse(POST(xs,params.updated(name,p),body,ctype,encoding),notFound)
     case DELETE(Seq(BooleanParam(p), xs @ _*),params) => handle.applyOrElse(DELETE(xs,params.updated(name,p)),notFound)
   }
 
@@ -99,8 +104,10 @@ package object dsl {
   // TODO: better way to extract the param?
   def int(name: String)(handle: RESTHandler)(implicit rp: RequestProvider) : RESTHandler = {
     case GET(Seq(IntParam(p), xs @ _*),params) => handle.applyOrElse(GET(xs,params.updated(name,p)),notFound)
-    case PUT(Seq(IntParam(p), xs @ _*),params,body) => handle.applyOrElse(PUT(xs,params.updated(name,p),body),notFound)
-    case POST(Seq(IntParam(p), xs @ _*),params,body) => handle.applyOrElse(POST(xs,params.updated(name,p),body),notFound)
+    case PUT(Seq(IntParam(p), xs @ _*),params,body,ctype,encoding) =>
+      handle.applyOrElse(PUT(xs,params.updated(name,p),body,ctype,encoding),notFound)
+    case POST(Seq(IntParam(p), xs @ _*),params,body,ctype,encoding) =>
+      handle.applyOrElse(POST(xs,params.updated(name,p),body,ctype,encoding),notFound)
     case DELETE(Seq(IntParam(p), xs @ _*),params) => handle.applyOrElse(DELETE(xs,params.updated(name,p)),notFound)
   }
 
@@ -116,6 +123,10 @@ package object dsl {
   @inline
   def respondWithResource(path: String, ctype: ContentType, status: Int = 200)(implicit rp: RequestProvider) : Unit =
     rp.request ! RespondWithResource(path,ctype,status)
+
+  @inline
+  def respondWithStream(stream: InputStream, ctype: ContentType, status: Int = 200)(implicit rp: RequestProvider) : Unit =
+    rp.request ! RespondWithStream(stream,ctype,status)
 
   @inline
   def noContent(implicit rp: RequestProvider) : Unit = rp.request ! NoContent
