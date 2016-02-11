@@ -25,11 +25,11 @@ abstract class Service extends MessageProcessor {
 
   /**
    * Called when an exception occurs while executing [[process]].
-   * The default implementation prints the exception to stderr.
+   * The default implementation delegates to [[Service.exceptionHandler]].
    *
    * @param ex
    */
-  def handleException(ex: Throwable) : Unit = { Console.err.println(ex) }
+  def handleException(ex: Throwable) : Unit = Service.exceptionHandler(ex)
 
   implicit final override def request : Request = _req
   final override def isRequest : Boolean = _req != NullRequest
@@ -50,6 +50,18 @@ abstract class Service extends MessageProcessor {
 
 object Service {
   type Processor = PartialFunction[Any,Unit]
+
+  private var _exceptionHandler: PartialFunction[Throwable,Any] = {
+    case ex: Throwable => ex.printStackTrace(Console.err)
+  }
+
+  /**
+   * Returns the global exception handler for [[Service]]S.
+   * The default handler simply prints the stack trace to stderr.
+   */
+  def exceptionHandler: PartialFunction[Throwable,Any] = _exceptionHandler
+
+  def exceptionHandler_=(f: PartialFunction[Throwable,Any]) = this.synchronized( _exceptionHandler = f )
 
   /**
    * Base trait for all objects that can process [[Request]]S
