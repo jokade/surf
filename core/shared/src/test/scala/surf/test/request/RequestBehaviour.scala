@@ -126,7 +126,7 @@ trait RequestBehaviour extends TestBase {
 
     'mapOutput-{
       val mapped = eut.mapOutput{ case "msg" => 44; case x => x }
-      val mapped2 = mapped.mapOutput{ case 44 => true }
+      val mapped2 = mapped.mapOutput{ case None => "msg" }
       assert( !eut.isCompleted, !mapped.isCompleted, !mapped2.isCompleted )
 
       "!eut"-{
@@ -146,10 +146,10 @@ trait RequestBehaviour extends TestBase {
       }
 
       "!mapped2"-{
-        val f1 = eut.future.map{ case m => assert(m==true) }
-        val f2 = mapped.future.map{ case m => assert(m==true) }
-        val f3 = mapped2.future.map{ case m => assert(m==true) }
-        mapped2 ! "msg"
+        val f1 = eut.future.map{ case m => assert(m==44) }
+        val f2 = mapped.future.map{ case m => assert(m==44) }
+        val f3 = mapped2.future.map{ case m => assert(m==44) }
+        mapped2 ! None
         merge(f1,f2,f3)
       }
     }

@@ -174,7 +174,7 @@ object Request {
       else target.complete(resp.map(mapResponse))
     @inline final override def mapInput(fInput: (Any)=>Any) = Request(fInput(input),target,annotations,mapResponse)
     @inline final override def map(fInput: (Any) => Any)(fOutput: (Any)=>Any) = Request(fInput(input),target,annotations,
-      if(mapResponse==null) fOutput else mapResponse andThen fOutput)
+      if(mapResponse==null) fOutput else fOutput andThen mapResponse)
     @inline final override def onComplete(f: PartialFunction[Try[Any],Any]) = {future.onComplete(f);this}
     @inline final override def onSuccess(f: PartialFunction[Any,Any]) = {future.onSuccess(f);this}
     @inline final override def onFailure(f: PartialFunction[Throwable,Any]) = {future.onFailure(f);this}
