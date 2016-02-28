@@ -7,7 +7,9 @@
 // Description:
 package surf
 
-import surf.service.{AsyncServiceWrapper, SyncServiceWrapper}
+import java.util.concurrent.ExecutorService
+
+import surf.service.{ExecutorServiceWrapper, AsyncServiceWrapper, SyncServiceWrapper}
 
 /**
  * A factory for creating [[ServiceRef]]S.
@@ -18,6 +20,11 @@ trait ServiceRefFactory {
 
   @inline
   final def serviceOf(createService: =>Service) : ServiceRef = serviceOf(ServiceProps(createService))
+
+  /**
+   * Terminates this factory.
+   */
+  def shutdown(): Unit = {}
 }
 
 object ServiceRefFactory {
@@ -34,6 +41,8 @@ object ServiceRefFactory {
    */
   implicit lazy val Async : ServiceRefFactory = new AsyncServiceRefFactory
 
+  def fromExecutorService(es: ExecutorService): ServiceRefFactory = new ExecutorServiceRefFactory(es)
+
   final class SyncServiceRefFactory extends ServiceRefFactory {
     @inline
     final override def serviceOf(props: ServiceProps) = new SyncServiceWrapper(props.createService())
@@ -42,6 +51,18 @@ object ServiceRefFactory {
   final class AsyncServiceRefFactory extends ServiceRefFactory {
     @inline
     final override def serviceOf(props: ServiceProps): ServiceRef = new AsyncServiceWrapper(props.createService())
+
+    override def shutdown(): Unit = {
+      java.util.concurrent.ForkJoinPool.commonPool().shutdownNow()
+    }
+  }
+
+  final class ExecutorServiceRefFactory(es: ExecutorService) extends ServiceRefFactory {
+    override def serviceOf(props: ServiceProps): ServiceRef = new ExecutorServiceWrapper(props.createService(),es)
+
+    override def shutdown(): Unit = {
+      es.shutdownNow()
+    }
   }
 
 }

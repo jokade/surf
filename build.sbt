@@ -12,7 +12,7 @@ lazy val commonSettings = Seq(
 )
 
 lazy val root = project.in(file(".")).
-  aggregate(coreJVM, coreJS, restJVM, restJS, akka, rest_servlet). //, rest_nodejs).
+  aggregate(coreJVM, coreJS, restJVM, restJS, akka, rest_servlet, testsJVM). //, rest_nodejs).
   settings(commonSettings:_*).
   settings(
     name := "surf",
@@ -97,6 +97,16 @@ lazy val rest_nodejs = project.
     libraryDependencies ++= Seq(
       "de.surfice" %%% "scalajs-nodejs" % "0.1-SNAPSHOT"
     )
+  )
+
+
+// integration+concurrency tests for JVM
+lazy val testsJVM = project.in(file("tests/jvm"))
+  .dependsOn( coreJVM, akka )
+  .settings(commonSettings:_*)
+  .settings(
+    publish := {},
+    publishLocal := {}
   )
 
 lazy val publishingSettings = Seq(
