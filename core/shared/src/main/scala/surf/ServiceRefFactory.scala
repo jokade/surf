@@ -7,9 +7,9 @@
 // Description:
 package surf
 
-import java.util.concurrent.ExecutorService
+import surf.service.{FutureServiceRef, SyncServiceWrapper}
 
-import surf.service.{ExecutorServiceWrapper, AsyncServiceWrapper, SyncServiceWrapper}
+import scala.concurrent.ExecutionContext
 
 /**
  * A factory for creating [[ServiceRef]]S.
@@ -37,32 +37,23 @@ object ServiceRefFactory {
   implicit lazy val Sync : ServiceRefFactory = new SyncServiceRefFactory
 
   /**
-   * Creates ServiceRefS that process messages asynchronously using a single thread.
+   * This factory creates ServiceRefS that process messages asynchronously
+   * using Futures and the global ExecutionContext.
    */
-  implicit lazy val Async : ServiceRefFactory = new AsyncServiceRefFactory
+  implicit lazy val Async : ServiceRefFactory = new FutureServiceRefFactory(ExecutionContext.global)
 
-  def fromExecutorService(es: ExecutorService): ServiceRefFactory = new ExecutorServiceRefFactory(es)
+  /**
+   * Creates a ServiceRefFactory for ServiceRefS that process messages asynchronously using Futures
+   * and the provided ExecutionContext.
+   */
+  def futures(executionContext: ExecutionContext) : ServiceRefFactory = new FutureServiceRefFactory(executionContext)
 
   final class SyncServiceRefFactory extends ServiceRefFactory {
     @inline
     final override def serviceOf(props: ServiceProps) = new SyncServiceWrapper(props.createService())
   }
 
-  final class AsyncServiceRefFactory extends ServiceRefFactory {
-    @inline
-    final override def serviceOf(props: ServiceProps): ServiceRef = new AsyncServiceWrapper(props.createService())
-
-    override def shutdown(): Unit = {
-      java.util.concurrent.ForkJoinPool.commonPool().shutdownNow()
-    }
+  final class FutureServiceRefFactory(ec: ExecutionContext) extends ServiceRefFactory {
+    override def serviceOf(props: ServiceProps): ServiceRef = new FutureServiceRef(props.createService())(ec)
   }
-
-  final class ExecutorServiceRefFactory(es: ExecutorService) extends ServiceRefFactory {
-    override def serviceOf(props: ServiceProps): ServiceRef = new ExecutorServiceWrapper(props.createService(),es)
-
-    override def shutdown(): Unit = {
-      es.shutdownNow()
-    }
-  }
-
 }
