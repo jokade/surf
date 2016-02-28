@@ -7,7 +7,8 @@
 // Description:
 package surf
 
-import surf.service.{FutureServiceRef, SyncServiceWrapper}
+import surf.service.Dispatcher.FutureDispatcher
+import surf.service.{Dispatcher, QueueServiceRef, SyncServiceWrapper}
 
 import scala.concurrent.ExecutionContext
 
@@ -54,6 +55,7 @@ object ServiceRefFactory {
   }
 
   final class FutureServiceRefFactory(ec: ExecutionContext) extends ServiceRefFactory {
-    override def serviceOf(props: ServiceProps): ServiceRef = new FutureServiceRef(props.createService())(ec)
+    val dispatcher = new FutureDispatcher(ec)
+    override def serviceOf(props: ServiceProps): ServiceRef = new QueueServiceRef(props.createService(),dispatcher)
   }
 }

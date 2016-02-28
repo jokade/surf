@@ -9,7 +9,7 @@ package surf.test.concurrency
 import java.util.ConcurrentModificationException
 
 import surf.dsl._
-import surf.test.{FutureServiceFixture, AkkaServiceFixture, IntegrationTestBase, SyncServiceFixture}
+import surf.test.{AsyncServiceFixture, AkkaServiceFixture, IntegrationTestBase, SyncServiceFixture}
 import surf.{Processor, Service}
 import utest._
 
@@ -77,6 +77,6 @@ trait ServiceConcurrencyTest extends IntegrationTestBase {
 
 object SyncServiceConcurrencyTest extends ServiceConcurrencyTest with SyncServiceFixture
 
-object FutureServiceConcurrencyTest extends ServiceConcurrencyTest with FutureServiceFixture
+object AsyncServiceConcurrencyTest extends ServiceConcurrencyTest with AsyncServiceFixture
 
 object AkkaServiceConcurrencyTest extends ServiceConcurrencyTest with AkkaServiceFixture

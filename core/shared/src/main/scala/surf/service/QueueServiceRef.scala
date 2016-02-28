@@ -11,32 +11,22 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import surf.Request.NullRequest
 import surf.{Request, Service, ServiceRef}
 
-import scala.concurrent.{Future, ExecutionContext}
-
 /**
- * This [[surf.ServiceRef]] implementation executes all messages and requests
- * sent to it asynchronously in a [[scala.concurrent.Future]], using the specific ExecutionContext.
+ * This [[surf.ServiceRef]] implementation puts all messages in a queue,
+ * and uses the specified dispatcher to handle the queued messages with a single service instance.
  *
- * @param processor
- * @param ec ExecutionContext used to execute messages
+ * @param service Service instance by which all messages are handled
+ * @param dispatcher Dispatcher used to process all enqueued messages
  */
-final class FutureServiceRef(processor: Service)(implicit ec: ExecutionContext) extends ServiceRef {
-  type Task = (Request,Any)
-  processor.self = this
-  private val queue = new ConcurrentLinkedQueue[Task]()
-
-  private def execute(): Unit = Future(processor.synchronized{
-      val task = queue.remove()
-      if(!queue.isEmpty)
-        execute()
-      processor.handle(task._1,task._2)
-    })
+final class QueueServiceRef(service: Service, dispatcher: Dispatcher) extends ServiceRef {
+  service.self = this
+  private val queue = new ConcurrentLinkedQueue[Dispatcher.Task]()
 
   private def enqueue(req: Request, input: Any) = {
     val task = (req,input)
     if(queue.isEmpty) {
       queue.add(task)
-      execute()
+      dispatcher.dispatch(queue,service)
     }
     else
       queue.add(task)
