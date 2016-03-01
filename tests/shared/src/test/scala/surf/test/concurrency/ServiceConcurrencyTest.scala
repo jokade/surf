@@ -8,14 +8,14 @@ package surf.test.concurrency
 
 import java.util.ConcurrentModificationException
 
+import surf.Service
 import surf.dsl._
-import surf.test.{AsyncServiceFixture, AkkaServiceFixture, IntegrationTestBase, SyncServiceFixture}
-import surf.{Processor, Service}
+import surf.test.{AsyncServiceFixture, IntegrationTestBase, SyncServiceFixture}
 import utest._
 
 import scala.util.Success
 
-trait ServiceConcurrencyTest extends IntegrationTestBase {
+abstract class ServiceConcurrencyTest extends IntegrationTestBase {
   val ref = factory.serviceOf(new TestService)
   val ntasks = 4
   val niter = 10000
@@ -57,7 +57,7 @@ trait ServiceConcurrencyTest extends IntegrationTestBase {
   class TestService extends Service {
     private var acc = 0
 
-    override def process: Processor = {
+    override def process = {
       case Ping =>
         val cur = acc
         acc += 1
@@ -79,4 +79,3 @@ object SyncServiceConcurrencyTest extends ServiceConcurrencyTest with SyncServic
 
 object AsyncServiceConcurrencyTest extends ServiceConcurrencyTest with AsyncServiceFixture
 
-object AkkaServiceConcurrencyTest extends ServiceConcurrencyTest with AkkaServiceFixture

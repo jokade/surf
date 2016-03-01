@@ -1,0 +1,216 @@
+@import Main._
+@import scalatex.site._
+@def comment(s: String) = {}
+@def autoLink(url: String) = {
+  if(url.contains("://"))
+    a(url, href:=url)
+  else
+    a(url, href:=s"http://$url")
+}
+@def example(f: Frag*) = div(
+  paddingLeft := "2em",
+  f
+)
+@def exampleWrapper(f: Frag*) = Seq(
+  hr,
+  div(f),
+  hr
+)
+@def Surf = "Surf"
+@def Akka = "Akka"
+@def term(s: Frag*) = code(s)
+@def emph(f: Frag*) = i(f)
+
+
+@a(
+  href:="https://github.com/jokade/surf",
+  position.absolute,
+  top:=0,right:=0,border:=0,
+  img(
+    src:="https://camo.githubusercontent.com/a6677b08c955af8400f44c6298f40e7d19cc5b2d/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677261795f3664366436642e706e67",
+    alt:="Fork me on GitHub"
+  )
+)
+@comment{
+  //-------------------------------- DOCUMENT ---------------------------------
+}
+@sect("Surf", "0.1-SNAPSHOT")
+  @p
+    @lnk("Surf", "https://github.com/jokade/surf") is a simple library for actor-style message passing and request flow processing with @lnk("Scala","http://scala-lang.org") and @lnk("Scala.js","http://scala-js.org").
+
+  @p
+    @b{Note}: This guide is work in progress :) Please feel free to post errors/ suggestions/ comments to the project @lnk("issue tracker","https://github.com/jokade/surf/issues").
+
+  @comment{
+  //------------------------------ Introduction -------------------------------
+  }
+  @sect{Introduction}
+    @p
+      @emph{This guide assumes some basic knowledge of @lnk("message passing","https://en.wikipedia.org/wiki/Message_passing") or @lnk("Akka","http://akka.io") actors.}
+    @p
+      Whereas Akka is an elaborate toolkit to build @cite{"powerful concurrent & distributed applications"} (@autoLink{akka.io}) that easily scale to large systems, @Surf is a thin abstraction layer to simplify actor-style programming for small to mid-size applications. @Surf's architecture is based on pluggable backends, so that it may be used on the JVM and with Scala.js. Hence, Surf has no explicit notion of mailboxes, dispatchers, etc., but relies on the used backend to provide the necessary mechanisms.
+    @p
+      In Surf, there are four basic types of entities that are required for message passing operations:
+    @dl
+      @dt{@b{Service}}
+      @dd{Encapsulates some application logic and communicates with its enviornment only via messages (a.k.a Actor in Akka)}
+      @dt{@b{ServiceRef}}
+      @dd{Interface for communication with a service (a.k.a ActorRef in Akka). All messages must be sent to a @term{ServiceRef}.}
+      @dt{@b{ServiceRefFactory}}
+      @dd{Factory to create @term{ServiceRef}s. You never interact directly with a @term{Service} instance; instead, you use a @term{ServiceRefFactory} (or @term{ServiceRefRegsitry}) to get a @term{ServiceRef} for a specific service implementation.}
+      @dt{@b{Message}}
+      @dd{Any object sent to or received from a Service. Although not enforced by @Surf, only @emph{immutable objects} should be used as messages.}
+
+    @p
+      All other Surf features, like @term{Request}s and request flow pipelines, are built on top of these concepts.
+
+    @sect{Services}
+      A @term{Service} in @Surf is similar to an @term{Actor} in @Akka. There are only two requirements for a class to be used as a service:
+      @ol
+        @li{It must extend the abstract class @term{surf.Service}, and}
+        @li{it must implement the @term{process} method.}
+
+      @p
+        Here is an example, that prints out @code{"Good Morning! How are you?"} whenever it receives the message @code{"Good Morning"}, and @code{"Received unknown message!"} for all other messages:
+
+      @example
+        @hl.scala
+          import surf.Service
+
+          class GreeterService extends Service {
+            def process = {
+              case "Good Morning" => println("Good Morning! How are you?")
+              case _ => println("Received unknown message!")
+            }
+          }
+      @p
+        You don't have to worry about concurrency when implementing a service. It is the responsibility of the Surf backend (e.g Akka) to ensure, that the @term{process} method of a service instance is never executed concurrently by more than a single thread. Hence it is perfectly fine to have mutable state within a @term{Service}: 
+      @example
+        @hl.scala
+          class GreeterService extends Service {
+            private var ngreets = 0
+
+            def process = {
+              case "Good Morning" => 
+                ngreets += 1
+                println("Good Morning! How are you?")
+              case _ => println("Received unknown message!")
+            }
+          }
+
+    @sect{ServiceRef, ServiceRefFactory, and ServiceProps}
+      @p
+        As stated before, we don't communicate directly with a service. Instead we send all messages to a façade object that is called a @term{ServiceRef} (a.k.a @term{ActorRef} in @Akka}. The reason for this is to decouple the service implementation from the logic that manages service instances and messaging (what we call the "backend"). This mechanism allows us to switch backend implementations at runtime, without any code modifications to the service implementation.
+
+      @p
+        To create a @term{ServiceRef} for a @term{Service} we use a @term{ServiceRefFactory}. The factory is configured for a specific Surf backend, and will create service instances as needed. But how do we tell the factory which service implementation it should use to create a @term{ServiceRef}? If all our @term{Service}s had only a no-arg constructor, we could simply pass the service @term{Class} and use reflection to instantiate it. However, usually a service depends on some other objects, services, etc.
+        
+      @p
+        The simplest approach to aquire such dependencies is to pass them as arguments to the service constructor. For example, if we want the greeting in our @term{GreeterService} to be configurable, we would simply declare it in the constructor:
+      @example
+        @hl.scala
+          class GreeterService(greeting: String) extends Service {
+            def process = {
+              case "Good Morning" => println(greeting)
+              case _ => println("Received unknown message!")
+            }
+          }
+
+      @p
+        Now, when we start up our application and configure all defined services, we could use reflection to inject
+        required arguments automatically. But with Scala's closures and call-by-name arguments we have a much
+        simpler means at hand: we simply pass the code to create an instance of our service as call-by-name argument
+        to @term{ServiceProps}:
+      @example
+        @hl.scala
+          import surf.ServiceProps
+
+          val goodMorningGreeting = "Good morning! How are you?"
+          // the argument to ServiceProps is call-by-name
+          // --> GreeterService not instantiated at this point!
+          val greeterProps: ServiceRef = ServiceProps( new GreeterService(goodMorningGreeting) )
+      
+      @p
+        The argument to @term{ServiceProps} is evaluated whenever @code{greeterProps.createService()} is called
+        to create a new instance of our @term{GreeterService}. However, we don't use @term{createService()}
+        directly. Instead we pass the @term{ServiceProps} object to a @term{ServiceRefFactory} and ask the factory
+        to return a @term{ServiceRef} for it:
+        
+      @example
+        @hl.scala
+          // Use Async backend provided by Surf
+          val factory: ServiceRefFactory = ServiceRefFactory.Async
+
+          // create a ServiceRef for GreeterService
+          val greeterService = factory.serviceOf( greeterProps )
+
+      @p
+        The @term{Async} factory used in the example is a simple backend provided by @Surf that has no external dependencies (e.g. @Akka) and is available for both, JVM and Scala.js.
+
+
+    @sect{Messages}
+      @p
+        Now that we have a @term{ServiceRef} for our @term{GreeterService} we can finally send messages to it. @Surf uses the same @lnk("tell","http://doc.akka.io/docs/akka/current/scala/actors.html#Tell__Fire-forget") syntax as @Akka for this purpose:
+
+      @example
+        @hl.scala
+          // send the message "Good Morning" to greeterService
+          // --> prints "Good Morning! How are you?" to stdout
+          greeterService ! "Good Morning"  
+
+          // sending a message to a service is usually non-blocking;
+          // --> "Done" is probably printed to stdout before the greeting
+          println("Done")
+
+      @p
+        Sending a message to a @term{ServiceRef} is a non-blocking call, i.e. only the operations necessary to put the message into the service's message queue are executed synchronously on the calling thread (there is one exception to this rule: the @term{ServiceRefFactory.Sync} backend executes the message process synchronously on the same thread).
+      
+      @p
+        The second method provided by @Akka for interaction with a service, the @lnk("ask","http://doc.akka.io/docs/akka/current/scala/actors.html#Ask__Send-And-Receive-Future") syntax, is not supported,
+        however. Instead, @Surf comes with its own concept to handle messages to which we expect a response: @term{Request}s. 
+
+    @sect{Requests}
+      @p
+        A @term{Request} is just a message for which we expect a response from the recipient. For example: until now our @term{GreeterService} wrote its response to our greeting simply to stdout, instead of responding to us directly (maybe it is a little shy?). Let's make our service a little more user-friendly:
+
+      @example
+        @hl.scala
+          class GreeterService(greeting: String) extends Service {
+            def process = {
+              case "Good Morning" if isRequest => request ! greeting
+              case "Good Morning" => println( greeting )
+              case _ => println("Received unknown message")
+            }
+          }
+
+      @p
+        This version of our service will still print out the greeting to stdout, if it receives 
+        @code{"Good Morning"} as a normal @emph{message}. But if the message received is a @term{Request},
+        it responds to this request with the value of @code{greeting}.
+
+      @p
+        Let's take a look at how to create a request, and how to receive the response value:
+
+      @example
+        @hl.scala
+          // we need an ExecutionContext to create a Request
+          import scala.concurrent.ExecutionContext.Implicits.global
+
+          // Create a Request with input value "Good Morning" and send it to greeterService
+          val req = greeterService ! Request("Good Morning")
+
+          // if the request was successful, handle the response
+          req onSuccess {
+            case "Good Morning! How are you?" => println("Great!")
+          }
+
+  @comment{
+  //-------------------------------- Tutorial ---------------------------------
+  }
+  @sect{Tutorial}
+    @p
+      TBD
+
+@comment{
+// vim: ft=scala
+}

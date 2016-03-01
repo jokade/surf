@@ -12,7 +12,7 @@ lazy val commonSettings = Seq(
 )
 
 lazy val root = project.in(file(".")).
-  aggregate(coreJVM, coreJS, restJVM, restJS, akka, rest_servlet, testsJVM). //, rest_nodejs).
+  aggregate(coreJVM, coreJS, restJVM, restJS, akka, rest_servlet, testsJVM, testsJS). //, rest_nodejs).
   settings(commonSettings:_*).
   settings(
     name := "surf",
@@ -105,9 +105,24 @@ lazy val testsJVM = project.in(file("tests/jvm"))
   .dependsOn( coreJVM, akka )
   .settings(commonSettings:_*)
   .settings(
+    name := "tests-jvm",
+    unmanagedSourceDirectories in Test += baseDirectory.value / ".." / "shared" / "src" / "test" / "scala",
     publish := {},
     publishLocal := {}
   )
+
+lazy val testsJS = project.in(file("tests/js"))
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn( coreJS )
+  .settings(commonSettings:_*)
+  .settings(
+    name := "tests-js",
+    unmanagedSourceDirectories in Test += baseDirectory.value / ".." / "shared" / "src" / "test" / "scala",
+    publish := {},
+    publishLocal := {}
+  )
+
+
 
 lazy val publishingSettings = Seq(
   publishMavenStyle := true,
