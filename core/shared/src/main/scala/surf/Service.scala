@@ -70,6 +70,7 @@ object Service {
    * Base trait for all objects that can process [[Request]]S
    */
   trait MessageProcessor {
+    type Processor = PartialFunction[Any,Unit]
 
     /**
      * Returns the Request currently in processing (if any).

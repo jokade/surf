@@ -10,5 +10,4 @@ package object surf {
   type Annotations = Map[String,Any]
 
   /// Type for message processing functions
-  type Processor = PartialFunction[Any,Unit]
 }

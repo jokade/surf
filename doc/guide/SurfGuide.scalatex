@@ -1,0 +1,153 @@
+@import Main._
+@import scalatex.site._
+@def comment(s: String) = {}
+@def autoLink(url: String) = {
+  if(url.contains("://"))
+    a(url, href:=url)
+  else
+    a(url, href:=s"http://$url")
+}
+@def example(f: Frag*) = div(f)
+@def exampleWrapper(f: Frag*) = Seq(
+  hr,
+  div(f),
+  hr
+)
+@def Surf = "Surf"
+@def Akka = "Akka"
+@def term(s: Frag*) = code(s)
+@def emph(f: Frag*) = i(f)
+
+
+@comment{
+  //-------------------------------- DOCUMENT ---------------------------------
+}
+@sect("Surf", "0.1-SNAPSHOT")
+  @p
+    @lnk("Surf", "https://github.com/jokade/surf") is a simple library for actor-style message passing and request flow processing with @lnk("Scala","http://scala-lang.org") and @lnk("Scala.js","http://scala-js.org").
+  @p
+    @emph{This guide assumes some basic knowledge of @lnk("message passing","https://en.wikipedia.org/wiki/Message_passing") or @lnk("Akka","http://akka.io") actors.}
+
+  @comment{
+  //------------------------------ Introduction -------------------------------
+  }
+  @sect{Introduction}
+    @p
+      Whereas Akka is an elaborate toolkit to build @cite{"powerful concurrent & distributed applications"} (@autoLink{akka.io}) that easily scale to large systems, @Surf is a thin abstraction layer to simplify actor-style programming for small to mid-size applications. @Surf's architecture is based on pluggable backends, so that it may be used on the JVM and with Scala.js. Hence, Surf has no explicit notion of mailboxes, dispatchers, etc., but relies on the used backend to provide the necessary mechanisms.
+    @p
+      In Surf, there are four basic types of entities that are required for message passing operations:
+    @dl
+      @dt{@b{Service}}
+      @dd{Encapsulates some application logic and communicates with its enviornment only via messages (a.k.a Actor in Akka)}
+      @dt{@b{ServiceRef}}
+      @dd{Interface for communication with a service (a.k.a ActorRef in Akka). All messages must be sent to a @term{ServiceRef}.}
+      @dt{@b{ServiceRefFactory}}
+      @dd{Factory to create @term{ServiceRef}s. You never interact directly with a @term{Service} instance; instead, you use a @term{ServiceRefFactory} (or @term{ServiceRefRegsitry}) to get a @term{ServiceRef} for a specific service implementation.}
+      @dt{@b{Message}}
+      @dd{Any object sent to or received from a Service. Although not enforced by @Surf, only @emph{immutable objects} should be used as messages.}
+
+    @p
+      All other Surf features, like @term{Request}s and request flow pipelines, are built on top of these concepts.
+
+    @sect{Services}
+      A @term{Service} in @Surf is similar to an @term{Actor} in @Akka. There are only two requirements for a class to be used as a service:
+      @ol
+        @li{It must extend the abstract class @term{surf.Service}, and}
+        @li{it must implement the @term{process} method.}
+
+      @p
+        Here is an example, that prints out @code{"Good Morning! How are you?"} whenever it receives the message @code{"Good Morning"}, and @code{"Received unknown message!"} for all other messages:
+
+      @example
+        @hl.scala
+          import surf.Service
+
+          class GreeterService extends Service {
+            def process = {
+              case "Good Morning" => println("Good Morning! How are you?")
+              case _ => println("Received unknown message!")
+            }
+          }
+      @p
+        You don't have to worry about concurrency when implementing a service. It is the responsibility of the Surf backend (e.g Akka) to ensure, that the @term{process} method of a service instance is never executed concurrently by more than a single thread. Hence it is perfectly fine to have mutable state within a @term{Service}: 
+      @example
+        @hl.scala
+          class GreeterService extends Service {
+            private var ngreets = 0
+
+            def process = {
+              case "Good Morning" => 
+                ngreets += 1
+                println("Good Morning! How are you?")
+              case _ => println("Received unknown message!")
+            }
+          }
+
+    @sect{ServiceRef, ServiceRefFactory, and ServiceProps}
+      @p
+        As stated before, we don't communicate directly with a service. Instead we send all messages to a façade object that is called a @term{ServiceRef} (a.k.a @term{ActorRef} in @Akka}. The reason for this is to decouple the service implementation from the logic that manages service instances and messaging (what we call the "backend"). This mechanism allows us to switch backend implementations at runtime, without any code modifications to the service implementation.
+
+      @p
+        To create a @term{ServiceRef} for a @term{Service} we use a @term{ServiceRefFactory}. The factory is configured for a specific Surf backend, and will create service instances as needed. But how do we tell the factory which service implementation it should use to create a @term{ServiceRef}? If all our @term{Service}s had only a no-arg constructor, we could simply pass the service @term{Class} and use reflection to instantiate it. However, usually a service depends on some other objects, services, etc.
+        
+      @p
+        The simplest approach to aquire such dependencies is to pass them as arguments to the service constructor. For example, if we want the greeting in our @term{GreeterService} to be configurable, we would simply declare it int he cosntructor:
+      @example
+        @hl.scala
+          class GreeterService(greeting: String) extends Service {
+            def process = {
+              case "Good Morning" => println(greeting)
+              case _ => println("Received unknown message!")
+            }
+          }
+
+      @p
+        We could use reflection to inject required arguments automatically (as do some well-known bean frameworks),
+        but with Scala's closures and call-by-name arguments we have a much simpler (and reliable) means at hand:
+        we simply write the code to create an instance of our instance and pass it as call-by-name argument to @term{ServiceProps}:
+      @example
+        @hl.scala
+          import surf.ServiceProps
+
+          val goodMorningGreeting = "Good morning! How are you?"
+          // the argument to ServiceProps is call-by-name
+          // --> GreeterService not instantiated at this point!
+          val greeterProps = ServiceProps( new GreeterService(goodMorningGreeting) )
+      
+      @p
+        The argument to @term{ServiceProps} is evaluated whenever @code{greeterProps.createService()} is called
+        to create a new instance of our @term{GreeterService}. However, we won't ever use @term{createService()}
+        directly. Instead we pass the @term{ServiceProps} object to a @term{ServiceRefFactory} and ask the factory
+        to return a @term{ServiceRef} for it:
+        
+      @example
+        @hl.scala
+          // Use Async backend provided by Surf
+          val factory: ServiceRefFactory = ServiceRefFactory.Async
+
+          // create a ServiceRef for GreeterService
+          val greeterService = factory.serviceOf( greeterProps )
+
+      @p
+        The @term{Async} factory is a simple backend provided by @Surf that has no external dependencies (e.g. @Akka)
+        and is available for both, JVM and Scala.js.
+
+
+    @sect{Messages}
+      @p
+        Now that we have a @term{ServiceRef} for our @term{GreeterService} we can finally send messages to it.
+
+    @sect{Requests}
+      @p
+
+
+  @comment{
+  //------------------------------ Getting Started -------------------------------
+  }
+  @sect{Getting Started}
+    @p
+
+
+@comment{
+// vim: ft=scala
+}
