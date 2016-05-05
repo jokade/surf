@@ -53,7 +53,7 @@
       In Surf, there are four basic types of entities that are required for message passing operations:
     @dl
       @dt{@b{Service}}
-      @dd{Encapsulates some application logic and communicates with its enviornment only via messages (a.k.a Actor in Akka)}
+      @dd{Encapsulates application logic and communicates with its enviornment only via messages (a.k.a Actor in Akka).}
       @dt{@b{ServiceRef}}
       @dd{Interface for communication with a service (a.k.a ActorRef in Akka). All messages must be sent to a @term{ServiceRef}.}
       @dt{@b{ServiceRefFactory}}

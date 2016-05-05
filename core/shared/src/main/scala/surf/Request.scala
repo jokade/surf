@@ -63,7 +63,7 @@ trait Request {
    *
    * @param input value for [[input]] in updated request
    */
-  def withInput(input: Any) : Request = mapInput( _ => input)
+  @inline final def withInput(input: Any) : Request = mapInput( _ => input)
 
   /**
    * Creates an updated request from the current one, where the response will be transformed by the specified function.
@@ -163,12 +163,23 @@ object Request {
   def apply(input: Any, target: Promise[Any], annotations: Annotations = Map(), mapResponse: (Any)=>Any = null)
            (implicit ec: ExecutionContext): Request = new Impl(input,target,annotations,mapResponse)
 
+  final class RichRequest(val req: Request) extends AnyVal {
+    /**
+     * Sends the specified input to the specified service and maps the result.
+     *
+     * @param service ServiceRef to which the speicifed input is sent
+     * @param input Input data sent to service
+     * @param mapOutput Mapping function for the result
+     */
+    @inline def completeWith(service: ServiceRef, input: Any)(mapOutput: Any => Any): Request =
+      req.map(_=>input)(mapOutput) >> service
+  }
 
   class Impl[T](val input: T, val target: Promise[Any], val annotations: Annotations, mapResponse: (Any) => Any)
                  (implicit ec: ExecutionContext) extends Request {
     @inline final override def withAnnotations(f: Annotations=>Annotations) = Request(input,target, f(annotations),mapResponse)
-    @inline final override def isCompleted: Boolean = target.isCompleted
-    final lazy val future: Future[Any] = target.future
+    @inline  final override def isCompleted: Boolean = target.isCompleted
+     lazy val future: Future[Any] = target.future
     @inline final override def complete(resp: Response): Unit =
       if(mapResponse==null) target.complete(resp)
       else target.complete(resp.map(mapResponse))

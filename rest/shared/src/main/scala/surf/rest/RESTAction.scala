@@ -72,6 +72,7 @@ object RESTAction {
   def matchPrefix[T>:RESTAction](prefix: Path, action: RESTAction): Option[T] =
     Path.matchPrefix(prefix,action.path).map( action.withPath )
 
+
 }
 
 

@@ -31,4 +31,8 @@ abstract class RESTService extends Service with RequestProvider {
 
 }
 
+object RESTService {
+  def apply(handler: RESTHandler): RESTService = new RESTServiceImpl(handler)
 
+  class RESTServiceImpl(val handle: RESTHandler) extends RESTService
+}

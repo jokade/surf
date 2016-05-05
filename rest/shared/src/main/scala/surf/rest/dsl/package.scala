@@ -7,8 +7,9 @@
 package surf.rest
 
 import java.io.InputStream
+import java.nio.file.{FileSystems, FileSystem}
 
-import surf.Request
+import surf.{ServiceRef, Request}
 import surf.rest.RESTAction.{DELETE, PUT, POST, GET}
 import surf.rest.RESTResponse._
 
@@ -29,6 +30,11 @@ package object dsl {
   def prefix(path: String, ignoreLeadingSlash: Boolean = true)
             (handle: RESTHandler)(implicit rp: RequestProvider) : RESTHandler =
     prefix( Path(path,ignoreLeadingSlash) )(handle)
+
+  def suffix(handle: RESTHandler)(implicit rp: RequestProvider) : RESTHandler = {
+    case act => handle.applyOrElse( act.withPath(Nil).withParams("&suffix"->act.path), notFound)
+  }
+
 
   def get(handle: RESTAction.GET=>Unit) : RESTHandler = {
     case a:GET if a.path.isEmpty => handle(a)
@@ -154,7 +160,6 @@ package object dsl {
    *   }
    * }
    * ```
-   *
    * @param handle A partial function that returns a tuple containing the resolved path of the resource to be served
    *               and the [[ContentType]] of the resource.
    * @param rp
@@ -162,7 +167,11 @@ package object dsl {
   def serveStatic(handle: PartialFunction[Path,(String,ContentType)])(implicit rp: RequestProvider) : RESTHandler = {
     case GET(path,_) => handle.applyOrElse(path, (_:Path) => (null:String,null:ContentType) ) match {
       case (null,null) => notFound
-      case (resource,ctype) => respondWithResource(resource,ctype)
+      case (resource,ctype) =>
+        if(FileSystems.getDefault.getPath(resource).toFile.canRead)
+          respondWithResource(resource,ctype)
+        else
+          rp.request ! NotFound
     }
   }
 
@@ -174,13 +183,26 @@ package object dsl {
    *   serveStatic("/path/to/resources")
    * }
    * ```
-   *
    * @param prefix Prefix path used to resolve all resource requests (i.e. the base directory)
    * @param rp
    */
   def serveStatic(prefix: String)(implicit rp: RequestProvider) : RESTHandler = {
-    case GET(PathWithContentType(file,ctype),_) => respondWithResource(prefix + file, ctype)
+    case GET(PathWithContentType(file,ctype),_) =>
+      val resource = prefix + file
+      if(FileSystems.getDefault.getPath(resource).toFile.canRead)
+        respondWithResource(resource,ctype)
+      else
+        rp.request ! NotFound
   }
+
+  @inline
+  def completeWithJSON(service: ServiceRef, input: Any)(mapOutput: Any => String)(implicit rp: RequestProvider): Request =
+    rp.request.map(_=>input)(mapOutput.andThen(json=>OK(json,ContentType.JSON))) >> service
+
+  /**
+   * Returns the path suffix matched by an enclosing [[suffix]] operator
+   */
+  def Suffix(implicit act: RESTAction): Path = act.params.get("&suffix").asInstanceOf[Option[Path]].getOrElse(Nil)
 
   object PathWithSuffix {
     /**
@@ -209,10 +231,22 @@ package object dsl {
       case _ => None
     }
   }
+
 }
 
 package dsl {
+
+  import surf.ServiceRef
+
   trait RequestProvider {
     def request: Request
   }
+
+//  object RequestProvider {
+//
+//    final class RichRequestProvider(val rp: RequestProvider) extends AnyVal {
+//      @inline def completeWithJSON(service: ServiceRef, input: Any)(mapOutput: Any=>String): Request =
+//        rp.request.map(_ => input)(mapOutput.andThen(json=>OK(json,ContentType.JSON)))
+//    }
+//  }
 }

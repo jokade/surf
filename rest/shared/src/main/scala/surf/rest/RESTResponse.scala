@@ -123,7 +123,8 @@ object ContentType {
     case "jpg"|"jpeg" => Some(JPEG)
     case "js"         => Some(JAVASCRIPT)
     case "json"       => Some(JSON)
-    case "txt"        => Some(PLAIN)
+    case _            => Some(PLAIN)
+
   }
 }
 

@@ -67,10 +67,10 @@ object SimpleRESTServer {
       }
     } catch {
       case ex @ ServerException(code,msg) =>
-        logger.error(ex.toString)
+        logger.error(msg)
         error(req,code,msg)
       case ex: Throwable =>
-        logger.error(ex.toString)
+        logger.error(ex.getMessage,ex)
         error(req,500,"Internal server error")
     }
 
@@ -149,14 +149,16 @@ object SimpleRESTServer {
       import r._
       val p = FileSystems.getDefault.getPath(path)
       if(Files.isReadable(p)) {
+        logger.debug(s"responding with resource $p (Content-Type: $ctype)")
         val out = req.getResponseBody
         req.getResponseHeaders.add("Content-Type",ctype)
         req.sendResponseHeaders(status,0)
         Files.copy(p,out)
         out.close()
       } else {
-        logger.error(s"error while processing $r: file '$p' is not readable")
-        error(req,500,"Error 500 - Internal Server Error")
+        logger.warn(s"cannot respond with resource '$p': file is not readable")
+        error(req,404,"Error 404 - Not Found")
+//        error(req,500,"Error 500 - Internal Server Error")
       }
     }
 
