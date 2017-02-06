@@ -195,9 +195,8 @@ package object dsl {
         rp.request ! NotFound
   }
 
-  @inline
   def completeWithJSON(service: ServiceRef, input: Any)(mapOutput: Any => String)(implicit rp: RequestProvider): Request =
-    rp.request.map(_=>input)(mapOutput.andThen(json=>OK(json,ContentType.JSON))) >> service
+    rp.request.map(_=>input)(mapOutput.andThen(json=>if(json==null) NotFound else OK(json,ContentType.JSON))) >> service
 
   /**
    * Returns the path suffix matched by an enclosing [[suffix]] operator

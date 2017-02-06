@@ -25,6 +25,14 @@ object RESTResponse {
   trait StringWriter {
     def write(s: String, charset: String) : Unit
   }
+  object StringWriter {
+    def apply(): StringWriter = new Impl
+    class Impl extends StringWriter {
+      val buf = new StringBuilder
+      override def write(s: String, charset: String): Unit = buf ++= s
+      override def toString = buf.toString()
+    }
+  }
   type ResponseWriter = Either[StringWriter=>Unit,OutputStream=>Unit]
 
 

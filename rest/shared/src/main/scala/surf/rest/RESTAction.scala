@@ -46,27 +46,27 @@ object RESTAction {
   case class GET(path: Path, params: Params) extends RESTAction {
     override def withPath(path: Path): GET = copy(path = path)
     override def withParams(param: (String,Any)*): GET = copy( params = params++param )
-    override def toString: String = s"GET ${path.mkString("/")}"
+    override def toString: String = s"GET '${path.mkString("/")}'"
   }
 
   case class PUT(path: Path, params: Params, body: Body, ctype: ContentType, encoding: String)
     extends BodyHolder {
     override def withPath(path: Path): PUT = copy(path = path)
     override def withParams(param: (String,Any)*): PUT = copy( params = params++param )
-    override def toString: String = s"PUT ${path.mkString("/")}"
+    override def toString: String = s"PUT '${path.mkString("/")}'"
   }
 
   case class POST(path: Path, params: Params, body: Body, ctype: ContentType, encoding: String)
     extends BodyHolder {
     override def withPath(path: Path): POST = copy(path = path)
     override def withParams(param: (String,Any)*): POST = copy( params = params++param )
-    override def toString: String = s"POST ${path.mkString("/")}"
+    override def toString: String = s"POST '${path.mkString("/")}'"
   }
 
   case class DELETE(path: Path, params: Params) extends RESTAction {
     override def withPath(path: Path): DELETE = copy(path = path)
     override def withParams(param: (String,Any)*): DELETE = copy( params = params++param )
-    override def toString: String = s"DELETE ${path.mkString("/")}"
+    override def toString: String = s"DELETE '${path.mkString("/")}'"
   }
 
   def matchPrefix[T>:RESTAction](prefix: Path, action: RESTAction): Option[T] =

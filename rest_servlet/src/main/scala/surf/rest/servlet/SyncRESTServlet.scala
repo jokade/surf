@@ -7,11 +7,11 @@
 package surf.rest.servlet
 
 import java.io.InputStream
-import java.nio.file.Files
+import java.nio.file.{FileSystems, Files}
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
-import surf.rest.RESTResponse._
 import surf.rest.{RESTAction, RESTRequest, RESTResolver}
+import surf.rest.RESTResponse._
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext}
@@ -44,6 +44,8 @@ class SyncRESTServlet(val resolver: RESTResolver, timeout: Duration)
       resp.setStatus(status)
       resp.setContentType(ctype)
       writeStream(stream,resp)
+    case r: RespondWithResource =>
+      respondWithResource(resp,r)
     case NoContent =>
       resp.setStatus(204)
     case BadRequest(msg) =>
@@ -61,7 +63,7 @@ class SyncRESTServlet(val resolver: RESTResolver, timeout: Duration)
     case Success(x) =>
       handleResult(x,resp)
     case x =>
-      error(resp,500,"Unknonw REST response of type "+x.getClass)
+      error(resp,500,"Unknown REST response of type "+x.getClass)
   }
 
 
@@ -84,6 +86,22 @@ class SyncRESTServlet(val resolver: RESTResolver, timeout: Duration)
     }
     in.close()
     out.close()
+  }
+
+  private def respondWithResource(resp: HttpServletResponse, r: RespondWithResource): Unit = {
+    val p = FileSystems.getDefault.getPath(r.path)
+    if(Files.isReadable(p)) {
+      logger.debug("responding with resource {} (Content-Type: {})",p,r.ctype)
+      val out = resp.getOutputStream
+      resp.addHeader("Content-Type", r.ctype)
+      resp.setStatus(r.status)
+      Files.copy(p,out)
+      out.close()
+    } else {
+      logger.warn("cannot respond with resource '{}': file is not readable",p)
+      error(resp,404,"Error 404 - Not Found")
+      //        error(req,500,"Error 500 - Internal Server Error")
+    }
   }
 
   private class ServletResponseWriter(resp: HttpServletResponse) extends StringWriter {

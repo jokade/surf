@@ -10,8 +10,9 @@ import java.util.function.BinaryOperator
 import javax.servlet.AsyncContext
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 
+import slogging.LazyLogging
 import surf.rest.RESTResponse._
-import surf.rest.{Encoding, ContentType, RESTAction, RESTResolver}
+import surf.rest.{ContentType, Encoding, RESTAction, RESTResolver}
 import surf.{Annotations, Request}
 
 import scala.collection.JavaConverters._
@@ -75,9 +76,8 @@ abstract class RESTServlet extends RESTServlet.Base {
 }
 
 object RESTServlet {
-  abstract class Base extends HttpServlet {
+  abstract class Base extends HttpServlet with LazyLogging {
     import surf.rest.{Params, Path}
-
 
     /**
      * The resolver used to find a handler service for each request
@@ -94,10 +94,19 @@ object RESTServlet {
     /**
      * Returns a map with all parameters set on the specified request.
      */
+    @inline
     final def params(req: HttpServletRequest) : Params = new ParamsMap(req.getParameterMap)
 
-    @inline
-    final def path(req: HttpServletRequest) : Path = Path(req.getPathInfo)
+    /**
+     * Returns the path of the specified request.
+     *
+     * @note By default, this will return `req.getPathInfo`. You may want to override this method
+     * with `Path( req.getServletPath )` if you get NullPointerExceptions from this method.
+     *
+     * @param req Request
+     * @return
+     */
+    def path(req: HttpServletRequest) : Path = Path(req.getPathInfo)
 
     final def body(req: HttpServletRequest) : String = {
       val len = req.getContentLength
@@ -107,22 +116,40 @@ object RESTServlet {
     }
 
     @inline
-    final def ctype(req: HttpServletRequest): ContentType = ContentType.PLAIN
+    final def contentType(req: HttpServletRequest): (ContentType,Encoding) = req.getHeader("Content-Type") match {
+      case null => (ContentType.PLAIN,"UTF-8")
+      case s =>
+        s.split(";") match {
+          case Array(ctype) => (ctype,"UTF-8")
+          case Array(ctype, charset) => (ctype, charset.split("=").last)
+        }
+    }
 
-    @inline
-    final def encoding(req: HttpServletRequest): Encoding = "UTF-8"
 
-    final override def doGet(req: HttpServletRequest, resp: HttpServletResponse): Unit =
+//    @inline
+//    final def encoding(req: HttpServletRequest): Encoding = "UTF-8"
+
+    final override def doGet(req: HttpServletRequest, resp: HttpServletResponse): Unit = {
+      logger.trace("handling doGet({})",reqInfo(req))
       handleRequest(RESTAction.GET(path(req),params(req)),req,resp)
+    }
 
-    final override def doPut(req: HttpServletRequest, resp: HttpServletResponse): Unit =
-      handleRequest(RESTAction.PUT(path(req),params(req),req.getInputStream,ctype(req),encoding(req)),req,resp)
+    final override def doPut(req: HttpServletRequest, resp: HttpServletResponse): Unit = {
+      logger.trace("handling.doPut({})", reqInfo(req))
+      val (ctype,enc) = contentType(req)
+      handleRequest(RESTAction.PUT(path(req), params(req), req.getInputStream,ctype,enc), req, resp)
+    }
 
-    final override def doPost(req: HttpServletRequest, resp: HttpServletResponse): Unit =
-      handleRequest(RESTAction.POST(path(req),params(req),req.getInputStream,ctype(req),encoding(req)),req,resp)
+    final override def doPost(req: HttpServletRequest, resp: HttpServletResponse): Unit = {
+      logger.trace("handling.doPost({})", reqInfo(req))
+      val (ctype,enc) = contentType(req)
+      handleRequest(RESTAction.POST(path(req), params(req), req.getInputStream, ctype, enc), req, resp)
+    }
 
-    final override def doDelete(req: HttpServletRequest, resp: HttpServletResponse): Unit =
-      handleRequest(RESTAction.DELETE(path(req),params(req)),req,resp)
+    final override def doDelete(req: HttpServletRequest, resp: HttpServletResponse): Unit = {
+      logger.trace("handling.doDelete({})", reqInfo(req))
+      handleRequest(RESTAction.DELETE(path(req), params(req)), req, resp)
+    }
 
     def handleRequest(action: RESTAction, req: HttpServletRequest, resp: HttpServletResponse) : Unit
 
@@ -134,6 +161,11 @@ object RESTServlet {
       override def get(key: String): Option[Array[String]] = if(m.containsKey(key)) Some(m.get(key)) else None
 
       override def iterator: Iterator[(String, Array[String])] = m.asScala.toIterator
+    }
+
+    private def reqInfo(req: HttpServletRequest): String = {
+      import req._
+      s"pathInfo='$getPathInfo', servletPath='$getServletPath'"
     }
   }
 

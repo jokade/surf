@@ -1,10 +1,11 @@
 
 lazy val commonSettings = Seq(
   organization := "de.surfice",
-  version := "0.1-SNAPSHOT",
+  version := "0.1.1-SNAPSHOT",
   scalaVersion := "2.11.7",
   scalacOptions ++= Seq("-deprecation","-unchecked","-feature","-Xlint"),
   libraryDependencies ++= Seq(
+    "biz.enef" %%% "slogging" % "0.5.2",
     "com.lihaoyi" %%% "utest" % "0.3.1" % "test"
   ),
   testFrameworks += new TestFramework("utest.runner.Framework"),
@@ -44,8 +45,7 @@ lazy val rest = crossProject.
   settings(
     name := "surf-rest",
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %% "upickle" % "0.2.8",
-      "biz.enef"    %% "slogging" % "0.4.0"
+      "com.lihaoyi" %% "upickle" % "0.2.8"
     )
   )
 

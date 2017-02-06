@@ -6,6 +6,7 @@
 //               Distributed under the MIT License (see included file LICENSE)
 package surf.rest
 
+import slogging.LazyLogging
 import surf.Service
 import surf.rest.RESTResponse.NotFound
 import surf.rest.dsl.RequestProvider
@@ -13,10 +14,11 @@ import surf.rest.dsl.RequestProvider
 /**
  * Base class for REST services.
  */
-abstract class RESTService extends Service with RequestProvider {
+abstract class RESTService extends Service with RequestProvider with LazyLogging {
 
   def handle: RESTHandler
 
+  def logRequests: Boolean = false
 
   def otherMessage(msg: Any): Unit =
     if(isRequest) ???
@@ -24,9 +26,15 @@ abstract class RESTService extends Service with RequestProvider {
 
   implicit def requestProvider: RequestProvider = this
 
-  override def process = {
-    case r: RESTAction => handle.applyOrElse(r, (_:RESTAction) => request ! NotFound )
-    case x => otherMessage(x)
+  final override val process: Processor = {
+    case r: RESTAction =>
+      if(logRequests)
+        logger.debug("processing {}",r)
+      handle.applyOrElse(r, (_:RESTAction) => request ! NotFound )
+    case x =>
+      if(logRequests)
+        logger.debug("processing message {}",x.toString)
+      otherMessage(x)
   }
 
 }
